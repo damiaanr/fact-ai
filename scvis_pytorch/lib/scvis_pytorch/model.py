@@ -7,9 +7,9 @@ from datetime import datetime
 
 from matplotlib import pyplot as plt
 
-from scvis.vae import GaussianVAE
-from scvis.likelihood import log_likelihood_student
-from scvis.tsne_helper import compute_transition_probability
+from .vae import GaussianVAE
+from .likelihood import log_likelihood_student
+from .tsne_helper import compute_transition_probability
 
 
 # =============================================================================
