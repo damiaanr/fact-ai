@@ -1,0 +1,5 @@
+matplotlib~=3.3.3
+numpy~=1.19.5
+PyYAML~=5.3.1
+pandas~=1.2.0
+scvis~=0.1.0
