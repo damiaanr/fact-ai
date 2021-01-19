@@ -7,7 +7,7 @@ from datetime import datetime
 
 from matplotlib import pyplot as plt
 
-from .vae import GaussianVAE
+from .vae import GaussianEncoder, GaussianDecoder
 from .likelihood import log_likelihood_student
 from .tsne_helper import compute_transition_probability
 
@@ -26,37 +26,31 @@ class SCVIS(nn.Module):
         self.n = self.hyperparameter['batch_size']
         self.perplexity = self.hyperparameter['perplexity']
 
-        # tf.set_random_seed(self.hyperparameter['seed'])
         if self.hyperparameter['seed']:
             torch.manual_seed(self.hyperparameter['seed'])
 
-        # Place_holders
-        self.batch_size = tf.placeholder(dtype=tf.int32)
-        self.x = tf.placeholder(tf.float32, shape=[None, self.architecture['input_dimension']])
-        self.z = tf.placeholder(tf.float32, shape=[None, self.architecture['latent_dimension']])
-
-        self.p = tf.placeholder(tf.float32, shape=[None, None])
-        self.iter = tf.placeholder(dtype=tf.float32)
-
-        self.vae = GaussianVAE(self.x,
+        self.vae = {}
+        self.vae.encoder = GaussianEncoder(self.architecture['input_dimension'],
                                self.batch_size,
                                self.architecture['inference']['layer_size'],
                                self.architecture['latent_dimension'],
                                decoder_layer_size=self.architecture['model']['layer_size'])
-
-        self.encoder_parameter = self.vae.encoder_parameter
+        self.vae.decoder = GaussianEncoder(self.architecture['input_dimension'],
+                               self.batch_size,
+                               self.architecture['inference']['layer_size'],
+                               self.architecture['latent_dimension'],
+                               decoder_layer_size=self.architecture['model']['layer_size'])
+        self.encoder_parameter = self.vae.encoder.encoder_parameter
         self.latent = dict()
         self.latent['mu'] = self.encoder_parameter.mu
         self.latent['sigma_square'] = self.encoder_parameter.sigma_square
-        self.latent['sigma'] = tf.sqrt(self.latent['sigma_square'])
+        self.latent['sigma'] = torch.sqrt(self.latent['sigma_square'])
 
-        self.decoder_parameter = self.vae.decoder_parameter
-        self.dof = tf.Variable(tf.constant(1.0, shape=[self.architecture['input_dimension']]),
-                               trainable=True, name='dof')
-        self.dof = tf.clip_by_value(self.dof, 0.1, 10, name='dof')
+        self.decoder_parameter = self.vae.decoder.decoder_parameter
+        self.dof = torch.clamp(torch.ones([self.architecture['input_dimension']]), 0.1, 10)
 
         with tf.name_scope('ELBO'):
-            self.weight = tf.clip_by_value(tf.reduce_sum(self.p, 0), 0.01, 2.0)
+            self.weight = torch.clamp(torch.sum(self.p, 0), 0.01, 2.0)
 
             self.log_likelihood = tf.reduce_mean(tf.multiply(
                 log_likelihood_student(self.x,
