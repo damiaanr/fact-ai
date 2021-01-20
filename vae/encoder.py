@@ -15,10 +15,10 @@ BATCH_SIZE = 505
 PERPLEXITY = 10
 LATENT_DIMENSION = 2
 
-def log_likelihood_student(x, mu, sigma_square, df):
+def log_likelihood_student(x, mu, sigma_square, df=2.0):
     sigma = sqrt(sigma_square)
     dist = distributions.StudentT(df=df, loc=mu, scale=sigma)
-    return sum(dist.log_prob(x), 1)
+    return torch.sum(dist.log_prob(x), dim=1)
 
 def init_w_b(layer):
     nn.init.xavier_normal_(layer.weight, gain=1.0)
@@ -127,6 +127,7 @@ class CustomLoss(nn.Module):
         self._net = net
 
     def forward(self,
+                x_batch,
                 p,
                 z_batch,
                 encoder_mu,
@@ -136,14 +137,15 @@ class CustomLoss(nn.Module):
                 iter: int,
                 dof: Tensor):
 
-        elbo = self._elbo(p,
-                          iter,
+        elbo = self._elbo(x_batch=x_batch,
+                          p=p,
+                          iter=iter,
                           encoder_mu=encoder_mu,
                           encoder_log_var=encoder_log_var,
                           decoder_mu=decoder_mu,
                           decoder_log_var=decoder_log_var,
                           dof=dof)
-        kl_pq = self._tsne_repel(z_batch) * np.min([iter, self._input_dim])
+        kl_pq = self._tsne_repel(z_batch=z_batch, p=p) * np.min([iter, self._input_dim])
         objective = kl_pq + self._l2_regulariser() - elbo
 
         return objective
@@ -152,23 +154,23 @@ class CustomLoss(nn.Module):
 
         # Computes half the L2 norm of a tensor without the `sqrt`: output = sum(t ** 2) / 2
         # Converted from tf.nn.l2_loss
-        penalty = [sum(var ** 2) / 2 for var in self._net.named_parameters() if 'weight' in var.name]
-
+        penalty = [torch.sum(var ** 2) / 2 for name, var in self._net.named_parameters() if 'weight' in name]
         l2_regularizer = L2_REGULARISATION * sum(penalty)
         return l2_regularizer
 
-    def _tsne_repel(self, z_batch):
+    def _tsne_repel(self, z_batch, p):
         nu = LATENT_DIMENSION
 
         sum_y = torch.sum(torch.square(z_batch), dim=1)
-        num = -2.0 * torch.matmul(z_batch, torch.transpose(z_batch)) + torch.reshape(sum_y, [-1, 1]) + sum_y
+        matmul_result = torch.matmul(z_batch, torch.transpose(z_batch, 0, 1))
+        num = -2.0 * matmul_result + torch.reshape(sum_y, [-1, 1]) + sum_y
         num = num / nu
 
-        p = self.p + 0.1 / BATCH_SIZE
-        p = p / torch.unsqueeze(torch.sum(p, dim=1), 1)
+        p_out = torch.from_numpy(p) + 0.1 / BATCH_SIZE
+        p_out = p_out / torch.unsqueeze(torch.sum(p_out, dim=1), 1)
 
         num = torch.pow(1.0 + num, -(nu + 1.0) / 2.0)
-        attraction = torch.multiply(p, torch.log(num))
+        attraction = torch.multiply(p_out, torch.log(num))
         attraction = -torch.sum(attraction)
 
         den = torch.sum(num, dim=1) - 1
@@ -176,15 +178,17 @@ class CustomLoss(nn.Module):
 
         return (repellant + attraction) / BATCH_SIZE
 
-    def _elbo(self, p, iter, encoder_mu, encoder_log_var, decoder_mu, decoder_log_var, dof):  # Compute ELBO: Evidence Lower Bound
-        weight = torch.clamp(torch.sum(p, 0), 0.01, 2.0)
-        log_likelihood = torch.mean(torch.multiply(
-            log_likelihood_student(x,
-                                   decoder_mu,
-                                   decoder_log_var,
-                                   dof),
-            weight))
+    def _elbo(self, x_batch, p, iter, encoder_mu, encoder_log_var, decoder_mu, decoder_log_var, dof):  # Compute ELBO: Evidence Lower Bound
+        p = torch.from_numpy(p)
+        x_batch = torch.from_numpy(x_batch)
+        weights = torch.clamp(torch.sum(p, 0), 0.01, 2.0)
 
+        # Compute log likelihood
+        multiplication_res = torch.multiply(log_likelihood_student(x_batch, decoder_mu, decoder_log_var, dof),
+                                            weights)
+        log_likelihood = torch.mean(multiplication_res)
+
+        # Compute KL divergence
         kl_divergence = torch.mean(0.5 * torch.sum(encoder_mu ** 2 +
                                                    encoder_log_var -
                                                    torch.log(encoder_log_var) - 1,

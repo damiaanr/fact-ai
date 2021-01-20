@@ -33,8 +33,9 @@ for iter_i in range(max_iter):
     optimizer.zero_grad()
 
     p, z, encoder_mu, encoder_log_var, decoder_mu, decoder_log_var, dof = net(x_batch)
-    loss = criterion(p=p,
-                     z=z,
+    loss = criterion(x_batch=x_batch,
+                     p=p,
+                     z_batch=z,
                      encoder_mu=encoder_mu,
                      encoder_log_var=encoder_log_var,
                      decoder_mu=decoder_mu,
