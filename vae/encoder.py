@@ -33,11 +33,11 @@ class VAE(nn.Module):
     def __init__(self, input_dim: int, latent_dim: int):
         super(VAE, self).__init__()
 
-        self._input_dum = input_dim
+        self._input_dim = input_dim
         self._latent_dim = latent_dim
 
         # Encoder layers
-        self.encoder_layer1 = nn.Linear(self._input_dum, 128)
+        self.encoder_layer1 = nn.Linear(self._input_dim, 128)
         init_w_b(self.encoder_layer1)
 
         self.encoder_layer2 = nn.Linear(128, 64)
@@ -68,13 +68,13 @@ class VAE(nn.Module):
         self.decoder_layer5 = nn.Linear(64, 128)
         init_w_b(self.decoder_layer5)
 
-        self.decoder_layer_mu = nn.Linear(128, self._input_dum)
+        self.decoder_layer_mu = nn.Linear(128, self._input_dim)
         init_w_b(self.decoder_layer_mu)
 
-        self.decoder_layer_sigma_square = nn.Linear(128, self._input_dum)
+        self.decoder_layer_sigma_square = nn.Linear(128, self._input_dim)
         init_w_b(self.decoder_layer_sigma_square)
 
-        dof_tensor = torch.ones(size=[self.architecture['input_dimension']], dtype=torch.float32, names=("dof"))
+        dof_tensor = torch.ones(size=[self._input_dim], dtype=torch.float32, names=("dof"))
         self.dof = nn.Parameter(dof_tensor, requires_grad=True)  # requires_grad=True to make it trainable
         self.dof = torch.clamp(self.dof, 0.1, 10)
 
