@@ -3,7 +3,10 @@ import pandas as pd
 import numpy as np
 from scvis import data
 from encoder import VAE, LATENT_DIMENSION, LEARNING_RATE, BATCH_SIZE, MAX_EPOCH, CustomLoss, PERPLEXITY, L2_REGULARISATION
+import datetime
 
+MIN_ITER = 3000
+MAX_ITER = 30000
 
 # Script for housing
 x = pd.read_csv('./Housing/Data/X.tsv', sep='\t').values
@@ -19,14 +22,18 @@ criterion = CustomLoss(input_dim, net)
 
 # Run a training epoch
 iter_per_epoch = round(x.shape[0] / BATCH_SIZE)
-max_iter = int(iter_per_epoch * MAX_EPOCH)
-if max_iter < 3000:
-    max_iter = 3000
-elif max_iter > 30000:
-    max_iter = np.max([30000, iter_per_epoch * 2])
+iter_n = int(iter_per_epoch * MAX_EPOCH)
+if iter_n < MIN_ITER:
+    iter_n = MIN_ITER
+elif iter_n > MAX_ITER:
+    iter_n = np.max([MAX_ITER, iter_per_epoch * 2])
 
-for iter_i in range(max_iter):
-    print("Iter: " + str(iter_i))
+print("Started: "+ str(datetime.datetime.now().time()))
+print("Iter N: " + str(iter_n))
+for iter_i in range(iter_n):
+    if iter_i % 100 == 0:
+        print("Iter: " + str(iter_i))
+
     x_batch, y_batch = train_data.next_batch(BATCH_SIZE)
 
     # clears old gradients from the last step (otherwise you’d just accumulate the gradients from all loss.backward() calls).
@@ -51,6 +58,7 @@ for iter_i in range(max_iter):
 
     # optimizer.step() causes the optimizer to take a step based on the gradients of the parameters.
     optimizer.step()
+print("Ended: "+ str(datetime.datetime.now().time()))
 
 torch.save({
     'perplexity': PERPLEXITY,

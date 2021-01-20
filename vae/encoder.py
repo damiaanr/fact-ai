@@ -72,7 +72,7 @@ class VAE(nn.Module):
         self.decoder_layer_sigma_square = nn.Linear(128, self._input_dim)
         init_w_b(self.decoder_layer_sigma_square)
 
-        dof_tensor = torch.ones(size=[self._input_dim], dtype=torch.float32, names=["dof"])
+        dof_tensor = torch.ones(size=[self._input_dim], dtype=torch.float32)
         self.dof = nn.Parameter(dof_tensor, requires_grad=True)  # requires_grad=True to make it trainable
 
     def encoder(self, x_batch):
