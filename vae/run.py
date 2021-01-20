@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 from scvis import data
-from vae.encoder import VAE, LATENT_DIMENSION, LEARNING_RATE, BATCH_SIZE, MAX_EPOCH, CustomLoss, PERPLEXITY, L2_REGULARISATION
+from encoder import VAE, LATENT_DIMENSION, LEARNING_RATE, BATCH_SIZE, MAX_EPOCH, CustomLoss, PERPLEXITY, L2_REGULARISATION
 
 
 # Script for housing
@@ -11,9 +11,13 @@ y = pd.read_csv('./Housing/Data/y.tsv', sep='\t').values
 train_data = data.DataSet(x, y)
 
 input_dim = x.shape[1]
+
+# Neural net object, optimizer and criterion
 net = VAE(input_dim, latent_dim=LATENT_DIMENSION)
 optimizer = torch.optim.Adam(net.parameters(), lr=LEARNING_RATE, betas=(0.9, 0.999), eps=0.001, weight_decay=L2_REGULARISATION)
+criterion = CustomLoss(input_dim, net)
 
+# Run a training epoch
 iter_per_epoch = round(x.shape[0] / BATCH_SIZE)
 max_iter = int(iter_per_epoch * MAX_EPOCH)
 if max_iter < 3000:
@@ -21,22 +25,22 @@ if max_iter < 3000:
 elif max_iter > 30000:
     max_iter = np.max([30000, iter_per_epoch * 2])
 
-criterion = CustomLoss(input_dim, net)
 for iter_i in range(max_iter):
+    print("Iter: " + str(iter_i))
     x_batch, y_batch = train_data.next_batch(BATCH_SIZE)
 
     # clears old gradients from the last step (otherwise you’d just accumulate the gradients from all loss.backward() calls).
     optimizer.zero_grad()
 
-    y_predicted, p, z, encoder_mu, encoder_log_var, decoder_mu, decoder_log_var, dof = net(x_batch, iter_i + 1)
-    loss = criterion(y_predicted,
-                     p=p,
+    p, z, encoder_mu, encoder_log_var, decoder_mu, decoder_log_var, dof = net(x_batch)
+    loss = criterion(p=p,
                      z=z,
                      encoder_mu=encoder_mu,
                      encoder_log_var=encoder_log_var,
                      decoder_mu=decoder_mu,
                      decoder_log_var=decoder_log_var,
-                     iter=iter_i+1)
+                     iter=iter_i+1,
+                     dof=dof)
 
     # loss.backward() computes the derivative of the loss w.r.t. the parameters (or anything requiring gradients) using backpropagation.
     loss.backward()

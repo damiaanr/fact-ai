@@ -1,5 +1,5 @@
 import torch
-from torch import nn, sqrt, distributions
+from torch import nn, sqrt, distributions, Tensor
 from torch.nn import functional as F
 import pandas as pd
 import numpy as np
@@ -11,7 +11,7 @@ MAX_SIGMA_SQUARE = 1e10
 LEARNING_RATE = 0.01
 L2_REGULARISATION = 0.001
 MAX_EPOCH = 100
-BATCH_SIZE = 512
+BATCH_SIZE = 505
 PERPLEXITY = 10
 LATENT_DIMENSION = 2
 
@@ -72,9 +72,8 @@ class VAE(nn.Module):
         self.decoder_layer_sigma_square = nn.Linear(128, self._input_dim)
         init_w_b(self.decoder_layer_sigma_square)
 
-        dof_tensor = torch.ones(size=[self._input_dim], dtype=torch.float32, names=("dof"))
+        dof_tensor = torch.ones(size=[self._input_dim], dtype=torch.float32, names=["dof"])
         self.dof = nn.Parameter(dof_tensor, requires_grad=True)  # requires_grad=True to make it trainable
-        self.dof = torch.clamp(self.dof, 0.1, 10)
 
     def encoder(self, x_batch):
         h1 = F.elu(self.encoder_layer1(x_batch))
@@ -89,12 +88,10 @@ class VAE(nn.Module):
         # I am not sure whether computing mu first and then do F.dropout works the same
         mu = F.dropout(mu, p=0.9)
 
-        return mu, log_var  # mu, log_var
+        return mu, log_var
 
     def sampling(self, encoder_mu, encoder_log_var):
-        # return
-        ep = torch.randn([self.input_size, self.output_dim])
-
+        ep = torch.randn([BATCH_SIZE, self._latent_dim])
         latent_z = torch.add(encoder_mu, torch.sqrt(encoder_log_var) * ep)
         return latent_z
 
@@ -104,14 +101,23 @@ class VAE(nn.Module):
         h3 = F.elu(self.decoder_layer3(h2))
         h4 = F.elu(self.decoder_layer4(h3))
         h5 = F.elu(self.decoder_layer5(h4))
-        return F.elu(self.self.decoder_layer_mu(h5)), F.elu(self.self.decoder_layer_sigma_square(h5))
 
-    def forward(self, x_batch):
+        mu = F.elu(self.decoder_layer_mu(h5))
+        sigma_square = F.elu(self.decoder_layer_sigma_square(h5))
+
+        return mu, sigma_square
+
+    def forward(self, x_batch: np.array):
         p = compute_transition_probability(x_batch, perplexity=PERPLEXITY)
+        x_batch = torch.from_numpy(x_batch)
         encoder_mu, encoder_log_var = self.encoder(x_batch)
         latent_z = self.sampling(encoder_mu, encoder_log_var)
         decoder_mu, decoder_log_var = self.decoder(latent_z)
-        return y, p, latent_z, encoder_mu, encoder_log_var, decoder_mu, decoder_log_var
+
+        # TODO Is this the right moment to clamp the DOF tensor?
+        dof = torch.clamp(self.dof, 0.1, 10)
+
+        return p, latent_z, encoder_mu, encoder_log_var, decoder_mu, decoder_log_var, dof
 
 
 class CustomLoss(nn.Module):
@@ -121,14 +127,14 @@ class CustomLoss(nn.Module):
         self._net = net
 
     def forward(self,
-                y_predicted,
                 p,
                 z_batch,
                 encoder_mu,
                 encoder_log_var,
                 decoder_mu,
                 decoder_log_var,
-                iter: int):
+                iter: int,
+                dof: Tensor):
 
         elbo = self._elbo(p,
                           iter,
