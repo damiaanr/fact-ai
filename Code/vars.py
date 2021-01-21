@@ -1,1 +1,0 @@
-root_path = "/Users/giguruscheuer/Apps/eldr-master"
