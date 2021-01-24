@@ -95,6 +95,7 @@ class VAE(nn.Module):
         latent_z = torch.add(encoder_mu, torch.sqrt(encoder_log_var) * ep)
         return latent_z
 
+
     def decoder(self, z):
         h1 = F.elu(self.decoder_layer1(z))
         h2 = F.elu(self.decoder_layer2(h1))
@@ -102,8 +103,9 @@ class VAE(nn.Module):
         h4 = F.elu(self.decoder_layer4(h3))
         h5 = F.elu(self.decoder_layer5(h4))
 
-        mu = F.elu(self.decoder_layer_mu(h5))
-        sigma_square = F.elu(self.decoder_layer_sigma_square(h5))
+        mu = self.decoder_layer_mu(h5)
+        sigma_square_before_clamped = self.decoder_layer_sigma_square(h5)
+        sigma_square = torch.clamp(F.softplus(sigma_square_before_clamped), EPS, MAX_SIGMA_SQUARE)
 
         return mu, sigma_square
 
@@ -146,7 +148,8 @@ class CustomLoss(nn.Module):
                           decoder_log_var=decoder_log_var,
                           dof=dof)
         kl_pq = self._tsne_repel(z_batch=z_batch, p=p) * np.min([iter, self._input_dim])
-        objective = kl_pq + self._l2_regulariser() - elbo
+        l2_regularisation = self._l2_regulariser()
+        objective = kl_pq + l2_regularisation - elbo
 
         return objective
 
@@ -184,8 +187,8 @@ class CustomLoss(nn.Module):
         weights = torch.clamp(torch.sum(p, 0), 0.01, 2.0)
 
         # Compute log likelihood
-        multiplication_res = torch.multiply(log_likelihood_student(x_batch, decoder_mu, decoder_log_var, dof),
-                                            weights)
+        lls_result = log_likelihood_student(x_batch, decoder_mu, decoder_log_var, dof)
+        multiplication_res = torch.multiply(lls_result, weights)
         log_likelihood = torch.mean(multiplication_res)
 
         # Compute KL divergence

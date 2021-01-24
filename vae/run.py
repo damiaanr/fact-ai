@@ -9,14 +9,15 @@ MIN_ITER = 3000
 MAX_ITER = 30000
 
 # Script for housing
-x = pd.read_csv('./Housing/Data/X.tsv', sep='\t').values
-y = pd.read_csv('./Housing/Data/y.tsv', sep='\t').values
+x = pd.read_csv('../Data/X.tsv', sep='\t').values
+y = pd.read_csv('../Data/y.tsv', sep='\t').values
 train_data = data.DataSet(x, y)
 
 input_dim = x.shape[1]
 
 # Neural net object, optimizer and criterion
 net = VAE(input_dim, latent_dim=LATENT_DIMENSION)
+net.train()
 optimizer = torch.optim.Adam(net.parameters(), lr=LEARNING_RATE, betas=(0.9, 0.999), eps=0.001, weight_decay=L2_REGULARISATION)
 criterion = CustomLoss(input_dim, net)
 
@@ -29,10 +30,10 @@ elif iter_n > MAX_ITER:
     iter_n = np.max([MAX_ITER, iter_per_epoch * 2])
 
 print("Started: "+ str(datetime.datetime.now().time()))
-print("Iter N: " + str(iter_n))
+print("Total iterations: " + str(iter_n))
 for iter_i in range(iter_n):
-    if iter_i % 100 == 0:
-        print("Iter: " + str(iter_i))
+    if iter_i % 50 == 0:
+        print("Iter: " + '{:>8}'.format(str(iter_i)) + "   " + str(datetime.datetime.now().time()))
 
     x_batch, y_batch = train_data.next_batch(BATCH_SIZE)
 
@@ -54,7 +55,7 @@ for iter_i in range(iter_n):
     loss.backward()
 
     # TODO clip_gradient like in scvis
-    torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm=10.0)
+    # torch.nn.utils.clip_grad_norm_(loss, max_norm=10.0)
 
     # optimizer.step() causes the optimizer to take a step based on the gradients of the parameters.
     optimizer.step()
@@ -70,3 +71,5 @@ torch.save({
     'model_state_dict': net.state_dict(),
     'optimizer_state_dict': optimizer.state_dict(),
 }, 'model.pt')
+
+print(torch.load('model.pt')['model_state_dict'])
