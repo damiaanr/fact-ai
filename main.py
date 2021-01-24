@@ -46,7 +46,7 @@ datasets = {
   #'Bipolar': (load_data(global_dir + '/data/Bipolar.tsv', False, False, False)[0], 18),
   'Housing': (load_data(global_dir + '/data/Housing.tsv', False, False, False)[0], 6),
   #'Iris': (load_data(global_dir + '/data/Iris.tsv', False, False, False)[0], 3),
-  'Heart': (load_data(global_dir + '/data/Heart.tsv', False, False, False)[0], 8),
+  # 'Heart': (load_data(global_dir + '/data/Heart.tsv', False, False, False)[0], 8),
   #'Seeds': (load_data(global_dir + '/data/Seeds.tsv', False, True, True)[0], 3),
   #'HTRU': (load_data(global_dir + '/data/HTRU.tsv', False, False, True)[0], 2),
   #'Wine': (load_data(global_dir + '/data/Wine.tsv', False, True, False)[0], 3),
@@ -69,7 +69,7 @@ for dataset in datasets.keys():
   K = np.arange(1, original_X.shape[1]+1, (1 if original_X.shape[1] <= 5 else 2))
   out = np.zeros((len(K), 2*len(transform_functions))) # correctness and coverage
     
-  fig, axs = plt.subplots((3 if len(transform_functions) >= 3 else len(transform_functions)), math.ceil(len(transform_functions)/3))
+  fig, axs = plt.subplots((3 if len(transform_functions) >= 3 else len(transform_functions)), math.ceil(len(transform_functions)/3), squeeze=False)
     
   i = 0
   for dr_algorithm in transform_functions.keys():
@@ -78,7 +78,7 @@ for dataset in datasets.keys():
     transformer = transform_functions[dr_algorithm]
     latent_X    = transformer(original_X)
     
-    latent_X[~np.isfinite(latent_X)] = 0
+    # latent_X[~np.isfinite(latent_X)] = 0
   
     # Generate clusters in latent space (K-means, but could be anything)
     kmeans = KMeans(n_clusters=num_clusters, random_state=42)
@@ -87,10 +87,12 @@ for dataset in datasets.keys():
     latent_Y_centers = kmeans.cluster_centers_
     
     # Plotting latent space
-    axs[int(i/2 % 3), math.floor(i/2/3)].scatter(latent_X[:, 0], latent_X[:, 1], c=latent_Y, s=2, cmap='viridis')
+    idx1 = int(i/2 % 3)
+    idx2 = int(math.floor(i/2/3))
+    axs[idx1, idx2].scatter(latent_X[:, 0], latent_X[:, 1], c=latent_Y, s=2, cmap='viridis')
     centers = kmeans.cluster_centers_
-    axs[int(i/2 % 3), math.floor(i/2/3)].scatter(latent_Y_centers[:, 0], latent_Y_centers[:, 1], c='black', s=200, alpha=0.5);
-    axs[int(i/2 % 3), math.floor(i/2/3)].set_title(dr_algorithm)
+    axs[idx1, idx2].scatter(latent_Y_centers[:, 0], latent_Y_centers[:, 1], c='black', s=200, alpha=0.5);
+    axs[idx1, idx2].set_title(dr_algorithm)
     
     # Training and evaluating for different Ks and lambdas
     if train_algos:

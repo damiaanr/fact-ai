@@ -161,8 +161,8 @@ class Explainer:
     
     for initial in range(self.num_clusters):
       for target in range(self.num_clusters):
-        x_init   = [self.original_X[i] for i in range(len(self.original_X)) if self.original_Y[i] == initial]
-        x_target = [self.original_X[i] for i in range(len(self.original_X)) if self.original_Y[i] == target]
+        x_init   = np.array([self.original_X[i] for i in range(len(self.original_X)) if self.original_Y[i] == initial])
+        x_target = np.array([self.original_X[i] for i in range(len(self.original_X)) if self.original_Y[i] == target])
         
         # Construct the explanation between the initial and target regions
         if initial == target:

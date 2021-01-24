@@ -90,8 +90,8 @@ class VAE(nn.Module):
 
         return mu, log_var
 
-    def sampling(self, encoder_mu, encoder_log_var):
-        ep = torch.randn([BATCH_SIZE, self._latent_dim])
+    def sampling(self, encoder_mu, encoder_log_var, batch_size=BATCH_SIZE):
+        ep = torch.randn([batch_size, self._latent_dim])
         latent_z = torch.add(encoder_mu, torch.sqrt(encoder_log_var) * ep)
         return latent_z
 

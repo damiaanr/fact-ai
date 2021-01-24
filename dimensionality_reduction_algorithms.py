@@ -28,18 +28,30 @@ def generate_transformers(x, min_variance=10):
     # 'lle': (lambda x: transform_lle(x, net)),
   }
 
-  # Variational Autoencoder
-  input_dim = x.shape[1]
-  net = VAE(input_dim=input_dim, latent_dim=2)
-  net.load_state_dict(torch.load('vae/model.pt')['model_state_dict'])
-  net.eval()
 
+
+  # Variational Autoencoder
   def transform_vae(x):
     with torch.no_grad():
+      # The neural net can handle both single or batch input
+      is_batch = len(x.shape) == 2
+
+      input_dim = x.shape[1] if is_batch else x.shape[0]
+      batch_size = len(x) if is_batch else 1
+
+      net = VAE(input_dim=input_dim, latent_dim=2)
+      net.load_state_dict(torch.load('vae/model.pt')['model_state_dict'])
+      net.eval()
       x_batch = torch.from_numpy(x).float()
       encoder_mu, encoder_log_var = net.encoder(x_batch)
-      batch_z = net.sampling(encoder_mu, encoder_log_var)
-      return batch_z.numpy()
+      batch_z = net.sampling(encoder_mu, encoder_log_var, batch_size=batch_size).numpy()
+
+      if is_batch:
+        # Rescale the values to a minimum variance by nq.sqrt(...) * np.sqrt(min_variance)
+        return np.array([batch_z[i] / np.sqrt(encoder_log_var[i].numpy()) * np.sqrt(min_variance) for i in range(len(batch_z))], dtype=float)
+      else:
+        # Rescale the values to a minimum variance by nq.sqrt(...) * np.sqrt(min_variance)
+        return np.array(batch_z / np.sqrt(encoder_log_var.numpy()) * np.sqrt(min_variance), dtype=float)
 
   """
   Note that below, we could have dynamically generated most transformer
