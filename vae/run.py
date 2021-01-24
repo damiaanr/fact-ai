@@ -9,8 +9,8 @@ MIN_ITER = 3000
 MAX_ITER = 30000
 
 # Script for housing
-x = pd.read_csv('../Data/X.tsv', sep='\t').values
-y = pd.read_csv('../Data/y.tsv', sep='\t').values
+x = pd.read_csv('./Data/X.tsv', sep='\t').values
+y = pd.read_csv('./Data/y.tsv', sep='\t').values
 train_data = data.DataSet(x, y)
 
 input_dim = x.shape[1]
@@ -55,7 +55,7 @@ for iter_i in range(iter_n):
     loss.backward()
 
     # TODO clip_gradient like in scvis
-    # torch.nn.utils.clip_grad_norm_(loss, max_norm=10.0)
+    torch.nn.utils.clip_grad_norm_(loss, max_norm=10.0)
 
     # optimizer.step() causes the optimizer to take a step based on the gradients of the parameters.
     optimizer.step()

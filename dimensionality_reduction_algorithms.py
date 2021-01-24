@@ -35,12 +35,11 @@ def generate_transformers(x, min_variance=10):
   net.eval()
 
   def transform_vae(x):
-    print('yo')
     with torch.no_grad():
       x_batch = torch.from_numpy(x).float()
       encoder_mu, encoder_log_var = net.encoder(x_batch)
       batch_z = net.sampling(encoder_mu, encoder_log_var)
-      return batch_z
+      return batch_z.numpy()
 
   """
   Note that below, we could have dynamically generated most transformer
