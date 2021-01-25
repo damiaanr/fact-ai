@@ -11,9 +11,11 @@ MAX_SIGMA_SQUARE = 1e10
 LEARNING_RATE = 0.01
 L2_REGULARISATION = 0.001
 MAX_EPOCH = 100
-BATCH_SIZE = 505
+BATCH_SIZE = 100
 PERPLEXITY = 10
 LATENT_DIMENSION = 2
+
+torch.manual_seed(42)
 
 def log_likelihood_student(x, mu, sigma_square, df=2.0):
     sigma = sqrt(sigma_square)
@@ -26,7 +28,10 @@ def init_w_b(layer):
 
 class VAE(nn.Module):
     """
-    @see https://medium.com/analytics-vidhya/complete-guide-to-build-an-autoencoder-in-pytorch-and-keras-94555dce395d
+    Based on the VAE in the repository https://github.com/shahcompbio/scvis.
+
+    For more general information on VAE, please see
+    https://towardsdatascience.com/understanding-variational-autoencoders-vaes-f70510919f73
     """
     def __init__(self, input_dim: int, latent_dim: int):
         super(VAE, self).__init__()
@@ -75,7 +80,7 @@ class VAE(nn.Module):
         dof_tensor = torch.ones(size=[self._input_dim], dtype=torch.float32)
         self.dof = nn.Parameter(dof_tensor, requires_grad=True)  # requires_grad=True to make it trainable
 
-    def encoder(self, x_batch):
+    def encoder(self, x_batch, p=0.9):
         h1 = F.elu(self.encoder_layer1(x_batch))
         h2 = F.elu(self.encoder_layer2(h1))
         h3 = F.elu(self.encoder_layer3(h2))
@@ -86,7 +91,7 @@ class VAE(nn.Module):
 
         # In SCVIS vae.py mu is computed using the output of the MLP and dropout is used on the weights tensor
         # I am not sure whether computing mu first and then do F.dropout works the same
-        mu = F.dropout(mu, p=0.9)
+        mu = F.dropout(mu, p=p)
 
         return mu, log_var
 
@@ -154,7 +159,6 @@ class CustomLoss(nn.Module):
         return objective
 
     def _l2_regulariser(self):
-
         # Computes half the L2 norm of a tensor without the `sqrt`: output = sum(t ** 2) / 2
         # Converted from tf.nn.l2_loss
         penalty = [torch.sum(var ** 2) / 2 for name, var in self._net.named_parameters() if 'weight' in name]

@@ -15,6 +15,10 @@ train_data = DataSet(x, y)
 
 input_dim = x.shape[1]
 
+# Normalise input data only when training
+normalizer = np.max(np.abs(x))
+x /= normalizer
+
 # Neural net object, optimizer and criterion
 net = VAE(input_dim, latent_dim=LATENT_DIMENSION)
 net.train()

@@ -3,7 +3,13 @@ from sklearn import manifold
 import numpy as np
 import math
 import torch
-from vae.encoder import VAE
+import os.path
+from vae.train import trainVAE
+from vae.dataset import DataSet
+from vae.encoder import VAE, LATENT_DIMENSION, LEARNING_RATE, BATCH_SIZE, MAX_EPOCH, CustomLoss, PERPLEXITY, L2_REGULARISATION
+import datetime
+
+torch.manual_seed(42)
 
 """
 We use different dimensionality reduction algorithms, which result in different
@@ -12,46 +18,21 @@ latent spaces. Each dimensionality reduction algorithm is defined by its own
 to representation/latent space.
 """
 
-
-def generate_transformers(x, min_variance=10):
+def generate_transformers(x, dataset, global_dir, min_variance=10, additional_scale_tsvd = 1):
   """
   This function returns a dictionary with callables for a given dataset.
   """
 
   transform_functions = {
-    'vae': (lambda x: transform_vae(x)),
-    # 'pca': (lambda x: transform_pca(x, pca, var_pca)),
-    # 'tsvd': (lambda x: transform_tsvd(x, tsvd)),
-    # 'kpca': (lambda x: transform_kpca(x, kpca)),
-    # 'spca': (lambda x: transform_spca(x, spca)),
-    # 'iso': (lambda x: transform_iso(x, iso)),
-    # 'lle': (lambda x: transform_lle(x, net)),
+    'pca': (lambda x: transform_pca(x, pca, var_pca)),
+    'tsvd': (lambda x: transform_tsvd(x, tsvd)),
+    'kpca': (lambda x: transform_kpca(x, kpca)),
+    'spca': (lambda x: transform_spca(x, spca)),
+    'iso': (lambda x: transform_iso(x, iso)),
+    'lle': (lambda x: transform_lle(x, lle)),
+    'vae': (lambda x: transform_vae(x, VAE_net)),
   }
 
-
-
-  # Variational Autoencoder
-  def transform_vae(x):
-    with torch.no_grad():
-      # The neural net can handle both single or batch input
-      is_batch = len(x.shape) == 2
-
-      input_dim = x.shape[1] if is_batch else x.shape[0]
-      batch_size = len(x) if is_batch else 1
-
-      net = VAE(input_dim=input_dim, latent_dim=2)
-      net.load_state_dict(torch.load('vae/model.pt')['model_state_dict'])
-      net.eval()
-      x_batch = torch.from_numpy(x).float()
-      encoder_mu, encoder_log_var = net.encoder(x_batch)
-      batch_z = net.sampling(encoder_mu, encoder_log_var, batch_size=batch_size).numpy()
-
-      if is_batch:
-        # Rescale the values to a minimum variance by nq.sqrt(...) * np.sqrt(min_variance)
-        return np.array([batch_z[i] / np.sqrt(encoder_log_var[i].numpy()) * np.sqrt(min_variance) for i in range(len(batch_z))], dtype=float)
-      else:
-        # Rescale the values to a minimum variance by nq.sqrt(...) * np.sqrt(min_variance)
-        return np.array(batch_z / np.sqrt(encoder_log_var.numpy()) * np.sqrt(min_variance), dtype=float)
 
   """
   Note that below, we could have dynamically generated most transformer
@@ -73,7 +54,7 @@ def generate_transformers(x, min_variance=10):
   var_tsvd = np.var(tsvd.fit_transform(x))
 
   def transform_tsvd(x, tsvd):
-    return np.matmul(x, np.transpose(tsvd.components_))/math.sqrt(var_tsvd)*math.sqrt(min_variance)
+    return np.matmul(x, np.transpose(tsvd.components_))/math.sqrt(var_tsvd)*math.sqrt(min_variance)*additional_scale_tsvd
     
     
   # Kernel PCA
@@ -116,7 +97,41 @@ def generate_transformers(x, min_variance=10):
       x = x.reshape(1,-1)
     return lle.transform(x)/math.sqrt(var_lle)*math.sqrt(min_variance)
   
+  # VAE
+  VAE_save_file = global_dir + "/results/vae_models/" + dataset + ".pt"
   
+  if not os.path.isfile(VAE_save_file):
+    trainVAE(x, global_dir, dataset)
+  
+  VAE_model = torch.load(VAE_save_file)['model_state_dict']
+  
+  print('Loaded VAE model for %s, dumping model state' % dataset)
+  print(VAE_model)
+    
+  VAE_net = VAE(input_dim=x.shape[1], latent_dim=2)
+  VAE_net.load_state_dict(VAE_model)
+  VAE_net.eval()
+  
+  def transform_vae(x, VAE_net):
+    x = np.array(x)
+
+    if len(x.shape) == 1:
+      x = x.reshape(1,-1)
+      
+    with torch.no_grad():
+      # The neural net can handle both single or batch input
+      is_batch = len(x.shape) == 2
+      batch_size = len(x) if is_batch else 1
+      x_batch = torch.from_numpy(x).float()
+      encoder_mu, encoder_log_var = VAE_net.encoder(x_batch, p=1.0)
+      batch_z = VAE_net.sampling(encoder_mu, encoder_log_var, batch_size=batch_size).numpy()
+
+      if is_batch:
+        return np.array([batch_z[i] / np.sqrt(encoder_log_var[i].numpy()) * np.sqrt(min_variance) for i in range(len(batch_z))], dtype=float)
+      else:
+        # Rescale the values to a minimum variance by nq.sqrt(...) * np.sqrt(min_variance)
+        return np.array(batch_z / np.sqrt(encoder_log_var.numpy()) * np.sqrt(min_variance), dtype=float)
+
   return transform_functions
   
   
