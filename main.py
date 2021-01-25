@@ -123,7 +123,7 @@ for dataset in datasets.keys():
               mean_cr = np.mean(cr)
               mean_cv = np.mean(cv)
               
-              print('[%s, K = %d, l = %.1f, trial %d] Average correctness: %.3f | Average coverage: %.3f' % (dr_algorithm.upper(), k, lamb, trial+1, mean_cr, mean_cv))
+              print('[%s, K = %d, l = %.1f, trial %d] Average correctness: %.3f | Average coverage: %.3f | %s' % (dr_algorithm.upper(), k, lamb, trial+1, mean_cr, mean_cv, str(datetime.now().time())))
               
               if mean_cr > best_measure:
                 best_measure = mean_cr
