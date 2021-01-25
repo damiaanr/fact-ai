@@ -1,7 +1,7 @@
 import torch
 import pandas as pd
 import numpy as np
-from scvis import data
+from dataset import DataSet
 from encoder import VAE, LATENT_DIMENSION, LEARNING_RATE, BATCH_SIZE, MAX_EPOCH, CustomLoss, PERPLEXITY, L2_REGULARISATION
 import datetime
 
@@ -11,7 +11,7 @@ MAX_ITER = 30000
 # Script for housing
 x = pd.read_csv('./Data/X.tsv', sep='\t').values
 y = pd.read_csv('./Data/y.tsv', sep='\t').values
-train_data = data.DataSet(x, y)
+train_data = DataSet(x, y)
 
 input_dim = x.shape[1]
 
