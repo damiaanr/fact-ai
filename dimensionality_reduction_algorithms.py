@@ -5,9 +5,7 @@ import math
 import torch
 import os.path
 from vae.train import trainVAE
-from vae.dataset import DataSet
-from vae.encoder import VAE, LATENT_DIMENSION, LEARNING_RATE, BATCH_SIZE, MAX_EPOCH, CustomLoss, PERPLEXITY, L2_REGULARISATION
-import datetime
+from vae.encoder import VAE
 
 torch.manual_seed(42)
 
@@ -24,13 +22,13 @@ def generate_transformers(x, dataset, global_dir, min_variance=10, additional_sc
   """
 
   transform_functions = {
+    'vae': (lambda x: transform_vae(x, VAE_net, nz)),
     'pca': (lambda x: transform_pca(x, pca, var_pca)),
     'tsvd': (lambda x: transform_tsvd(x, tsvd)),
     'kpca': (lambda x: transform_kpca(x, kpca)),
     'spca': (lambda x: transform_spca(x, spca)),
-    'iso': (lambda x: transform_iso(x, iso)),
-    'lle': (lambda x: transform_lle(x, lle)),
-    'vae': (lambda x: transform_vae(x, VAE_net, nz)),
+    # 'iso': (lambda x: transform_iso(x, iso)),
+    # 'lle': (lambda x: transform_lle(x, lle)),
   }
 
 
@@ -115,7 +113,7 @@ def generate_transformers(x, dataset, global_dir, min_variance=10, additional_sc
   VAE_net.load_state_dict(VAE_model)
   VAE_net.eval()
   
-  def transform_vae(x, VAE_net, nz):
+  def transform_vae(x, VAE_net):
     x = np.array(x)
     if len(x.shape) == 1:
       x = x.reshape(1,-1)
@@ -128,13 +126,7 @@ def generate_transformers(x, dataset, global_dir, min_variance=10, additional_sc
       encoder_mu, encoder_log_var = VAE_net.encoder(x_batch, p=1.0)
       batch_z = VAE_net.sampling(encoder_mu, encoder_log_var, batch_size=batch_size).numpy()
 
-      if is_batch:
-        #return np.array([batch_z[i] / np.sqrt(encoder_log_var[i].numpy()) * np.sqrt(min_variance) for i in range(len(batch_z))], dtype=float)
-        return np.array(batch_z, dtype=float)
-      else:
-        # Rescale the values to a minimum variance by nq.sqrt(...) * np.sqrt(min_variance)
-        #return np.array(batch_z / np.sqrt(encoder_log_var.numpy()) * np.sqrt(min_variance), dtype=float)
-        return np.array(batch_z, dtype=float)
+      return np.array(batch_z, dtype=float)
   return transform_functions
   
   
