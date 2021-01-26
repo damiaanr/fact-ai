@@ -44,12 +44,12 @@ print('Loading datasets...')
 # Loading all datasets - tuples: (X, num_clusters)
 datasets = {
   #'Bipolar': (load_data(global_dir + '/data/Bipolar.tsv', False, False, False)[0], 18),
-  #'Housing': (load_data(global_dir + '/data/Housing.tsv', False, False, False)[0], 6),
-  #'Iris': (load_data(global_dir + '/data/Iris.tsv', False, False, False)[0], 3),
+  'Housing': (load_data(global_dir + '/data/Housing.tsv', False, False, False)[0], 6),
+  'Iris': (load_data(global_dir + '/data/Iris.tsv', False, False, False)[0], 3),
   'Heart': (load_data(global_dir + '/data/Heart.tsv', False, False, False)[0], 8),
-  ##'Seeds': (load_data(global_dir + '/data/Seeds.tsv', False, True, True)[0], 3),
+  'Seeds': (load_data(global_dir + '/data/Seeds.tsv', False, True, True)[0], 3),
   'Wine': (load_data(global_dir + '/data/Wine.tsv', False, True, False)[0], 3),
-  ##'Glass': (load_data(global_dir + '/data/Glass.tsv', False, True, True)[0], 7),
+  'Glass': (load_data(global_dir + '/data/Glass.tsv', False, True, True)[0], 7),
 }
 
 # Preload 
@@ -74,7 +74,7 @@ for dataset in datasets.keys():
   
     transformer = transform_functions[dr_algorithm]
     latent_X    = transformer(original_X)
-    
+
     latent_X[~np.isfinite(latent_X)] = 0
   
     # Generate clusters in latent space (K-means, but could be anything)
@@ -134,7 +134,7 @@ for dataset in datasets.keys():
     axs[-1, -1].axis('off')
     if len(transform_functions) > 6:
       axs[-2, -1].axis('off')
-      
+
   fig.suptitle(dataset + " dataset (variance adjusted to " + str(variance_adjust) + ", " + str(num_clusters) + " clusters)")
   plt.show()
   fig.savefig(global_dir + "/results/plots/latent_spaces_" + dataset + "_" + str(datetime.timestamp(datetime.now())) + ".png", bbox_inches='tight')

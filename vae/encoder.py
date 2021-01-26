@@ -159,7 +159,7 @@ class CustomLoss(nn.Module):
 
         # Computes half the L2 norm of a tensor without the `sqrt`: output = sum(t ** 2) / 2
         # Converted from tf.nn.l2_loss
-        penalty = [torch.sum(var ** 2) / 2 for name, var in self._net.named_parameters() if 'weight' in name]
+        penalty = [torch.sum(var ** 2) / 2 for name, var in self._net.named_parameters() if '.weight' in name]
         l2_regularizer = L2_REGULARISATION * sum(penalty)
         return l2_regularizer
 

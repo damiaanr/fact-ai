@@ -7,7 +7,8 @@ import datetime
 
 MIN_ITER = 3000
 MAX_ITER = 30000
-
+CLIP_VALUE = 3.0
+CLIP_NORM = 10.0
 torch.manual_seed(42)
 
 def trainVAE(x, global_dir, dataset):
@@ -54,8 +55,14 @@ def trainVAE(x, global_dir, dataset):
       # loss.backward() computes the derivative of the loss w.r.t. the parameters (or anything requiring gradients) using backpropagation.
       loss.backward()
 
-      # TODO clip_gradient like in scvis
-      torch.nn.utils.clip_grad_norm_(loss, max_norm=10.0)
+      # Clip gradients like in SCVIS
+      torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm=CLIP_NORM)
+      for name, var in net.named_parameters():
+          if 'encoder_layer_sigma_square' in name:
+              torch.clamp(var.grad, -CLIP_VALUE*0.1, CLIP_VALUE*0.1)
+          else:
+              torch.clamp(var.grad, -CLIP_VALUE, CLIP_VALUE)
+
 
       # optimizer.step() causes the optimizer to take a step based on the gradients of the parameters.
       optimizer.step()
