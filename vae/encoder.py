@@ -28,9 +28,16 @@ def init_w_b(layer):
 
 class VAE(nn.Module):
     """
-    @see https://medium.com/analytics-vidhya/complete-guide-to-build-an-autoencoder-in-pytorch-and-keras-94555dce395d
+    Variational autoencoder based on SCVIS (repository url: https://github.com/shahcompbio/scvis) published in the paper
+    'Interpretable dimensionality reduction of single cell transcriptome data with deep generative models' by Ding et
+    al. (paper url: https://www.nature.com/articles/s41467-018-04368-5)
     """
     def __init__(self, input_dim: int, latent_dim: int):
+        """
+
+        :param input_dim: The number of features of each instance in the dataset
+        :param latent_dim: The number of latent dimensions to map it onto.
+        """
         super(VAE, self).__init__()
 
         self._input_dim = input_dim
@@ -82,13 +89,12 @@ class VAE(nn.Module):
         h2 = F.elu(self.encoder_layer2(h1))
         h3 = F.elu(self.encoder_layer3(h2))
 
-        mu = self.encoder_layer_mu(h3)
+        weights_mu = F.dropout(self.encoder_layer_mu.weight, p=p)
+
+        mu = torch.add(torch.matmul(h3, weights_mu), self.encoder_layer_mu.bias)
+
         log_var = self.encoder_layer_sigma_square(h3)
         log_var = torch.clamp(F.softplus(log_var), EPS, MAX_SIGMA_SQUARE)
-
-        # In SCVIS vae.py mu is computed using the output of the MLP and dropout is used on the weights tensor
-        # I am not sure whether computing mu first and then do F.dropout works the same
-        mu = F.dropout(mu, p=p)
 
         return mu, log_var
 
