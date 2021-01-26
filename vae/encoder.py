@@ -91,7 +91,7 @@ class VAE(nn.Module):
 
         weights_mu = F.dropout(self.encoder_layer_mu.weight, p=p)
 
-        mu = torch.add(torch.matmul(h3, weights_mu), self.encoder_layer_mu.bias)
+        mu = torch.add(torch.matmul(h3, torch.transpose(weights_mu, 0, 1)), self.encoder_layer_mu.bias)
 
         log_var = self.encoder_layer_sigma_square(h3)
         log_var = torch.clamp(F.softplus(log_var), EPS, MAX_SIGMA_SQUARE)
