@@ -28,10 +28,7 @@ def init_w_b(layer):
 
 class VAE(nn.Module):
     """
-    Based on the VAE in the repository https://github.com/shahcompbio/scvis.
-
-    For more general information on VAE, please see
-    https://towardsdatascience.com/understanding-variational-autoencoders-vaes-f70510919f73
+    @see https://medium.com/analytics-vidhya/complete-guide-to-build-an-autoencoder-in-pytorch-and-keras-94555dce395d
     """
     def __init__(self, input_dim: int, latent_dim: int):
         super(VAE, self).__init__()
@@ -159,6 +156,7 @@ class CustomLoss(nn.Module):
         return objective
 
     def _l2_regulariser(self):
+
         # Computes half the L2 norm of a tensor without the `sqrt`: output = sum(t ** 2) / 2
         # Converted from tf.nn.l2_loss
         penalty = [torch.sum(var ** 2) / 2 for name, var in self._net.named_parameters() if 'weight' in name]

@@ -1,23 +1,17 @@
 import numpy as np
 
 MAX_VALUE = 1
-LABEL = None
 
-np.random.seed(0)
-
+np.random.seed(42)
 
 class DataSet(object):
-    def __init__(self, x, y=LABEL, max_value=MAX_VALUE):
-        if y is not None:
-            assert x.shape[0] == y.shape[0], \
-                ('x.shape: %s, y.shape: %s' % (x.shape, y.shape))
+    def __init__(self, x, max_value=MAX_VALUE):
 
         self._num_data = x.shape[0]
         x = x.astype(np.float32)
         x /= max_value
 
         self._x = x
-        self._y = y
         self._epoch = 0
         self._index_in_epoch = 0
 
@@ -28,10 +22,6 @@ class DataSet(object):
     @property
     def all_data(self):
         return self._x
-
-    @property
-    def label(self):
-        return self._y
 
     @property
     def num_of_data(self):
@@ -58,12 +48,8 @@ class DataSet(object):
         end = self._index_in_epoch
 
         index = self._index[start:end]
-        if self._y is not None:
-            y = self._y[index]
-        else:
-            y = self._y
 
-        return self._x[index], y
+        return self._x[index]
 
 
 def prepare_data(data):

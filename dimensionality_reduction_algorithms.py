@@ -30,7 +30,7 @@ def generate_transformers(x, dataset, global_dir, min_variance=10, additional_sc
     'spca': (lambda x: transform_spca(x, spca)),
     'iso': (lambda x: transform_iso(x, iso)),
     'lle': (lambda x: transform_lle(x, lle)),
-    'vae': (lambda x: transform_vae(x, VAE_net)),
+    'vae': (lambda x: transform_vae(x, VAE_net, nz)),
   }
 
 
@@ -100,8 +100,11 @@ def generate_transformers(x, dataset, global_dir, min_variance=10, additional_sc
   # VAE
   VAE_save_file = global_dir + "/results/vae_models/" + dataset + ".pt"
   
+  #x = np.array(x)
+  nz = np.max(np.abs(x)) # normalizer
+  
   if not os.path.isfile(VAE_save_file):
-    trainVAE(x, global_dir, dataset)
+    trainVAE(x/nz, global_dir, dataset)
   
   VAE_model = torch.load(VAE_save_file)['model_state_dict']
   
@@ -112,9 +115,8 @@ def generate_transformers(x, dataset, global_dir, min_variance=10, additional_sc
   VAE_net.load_state_dict(VAE_model)
   VAE_net.eval()
   
-  def transform_vae(x, VAE_net):
+  def transform_vae(x, VAE_net, nz):
     x = np.array(x)
-
     if len(x.shape) == 1:
       x = x.reshape(1,-1)
       
@@ -127,11 +129,12 @@ def generate_transformers(x, dataset, global_dir, min_variance=10, additional_sc
       batch_z = VAE_net.sampling(encoder_mu, encoder_log_var, batch_size=batch_size).numpy()
 
       if is_batch:
-        return np.array([batch_z[i] / np.sqrt(encoder_log_var[i].numpy()) * np.sqrt(min_variance) for i in range(len(batch_z))], dtype=float)
+        #return np.array([batch_z[i] / np.sqrt(encoder_log_var[i].numpy()) * np.sqrt(min_variance) for i in range(len(batch_z))], dtype=float)
+        return np.array(batch_z, dtype=float)
       else:
         # Rescale the values to a minimum variance by nq.sqrt(...) * np.sqrt(min_variance)
-        return np.array(batch_z / np.sqrt(encoder_log_var.numpy()) * np.sqrt(min_variance), dtype=float)
-
+        #return np.array(batch_z / np.sqrt(encoder_log_var.numpy()) * np.sqrt(min_variance), dtype=float)
+        return np.array(batch_z, dtype=float)
   return transform_functions
   
   

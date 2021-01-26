@@ -44,9 +44,9 @@ print('Loading datasets...')
 # Loading all datasets - tuples: (X, num_clusters)
 datasets = {
   #'Bipolar': (load_data(global_dir + '/data/Bipolar.tsv', False, False, False)[0], 18),
-  'Housing': (load_data(global_dir + '/data/Housing.tsv', False, False, False)[0], 6),
-  'Iris': (load_data(global_dir + '/data/Iris.tsv', False, False, False)[0], 3),
-  ##'Heart': (load_data(global_dir + '/data/Heart.tsv', False, False, False)[0], 8),
+  #'Housing': (load_data(global_dir + '/data/Housing.tsv', False, False, False)[0], 6),
+  #'Iris': (load_data(global_dir + '/data/Iris.tsv', False, False, False)[0], 3),
+  'Heart': (load_data(global_dir + '/data/Heart.tsv', False, False, False)[0], 8),
   ##'Seeds': (load_data(global_dir + '/data/Seeds.tsv', False, True, True)[0], 3),
   'Wine': (load_data(global_dir + '/data/Wine.tsv', False, True, False)[0], 3),
   ##'Glass': (load_data(global_dir + '/data/Glass.tsv', False, True, True)[0], 7),
@@ -132,6 +132,8 @@ for dataset in datasets.keys():
   # First showing the latent space plot
   if len(transform_functions) % 2 == 1:
     axs[-1, -1].axis('off')
+    if len(transform_functions) > 6:
+      axs[-2, -1].axis('off')
       
   fig.suptitle(dataset + " dataset (variance adjusted to " + str(variance_adjust) + ", " + str(num_clusters) + " clusters)")
   plt.show()
