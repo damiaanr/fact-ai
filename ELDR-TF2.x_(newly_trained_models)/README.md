@@ -29,6 +29,7 @@
     
 # Procedure for re-training models and re-learning explanations
   
+  0. Make sure your environments aligns to the provided `environment.yml`
   1. Install the updated variant of CSVIS by running the command `python setup.py install` in the scvis folder
   2. Choose a dataset (Bipolar/Heart/Iris/Housing)
   3. If still present: deleting all saved models and explanation by recursively deleting `{dataset-name}/Model`, and deleting `{dataset-name}-K/delta([0-9]*).npy`
