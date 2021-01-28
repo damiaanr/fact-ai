@@ -5,10 +5,10 @@ All code is run through `main.py` in command-line, without command line argument
 By simply toggling straightfoward variables in the code of `main.py`, you can:
 
   1. Learn explanations (which might involve training VAE models, if not yet trained): set `train_algos` on line `137` to `True`. This will generate 'latent space plots' and 'performance plots' which are also stored in the `results/plots` folder.
-    - You can optionally skip the graphs of latent spaces and metrics (for example, when bulk-training all datasets) by setting `skip_graphs` on line `140` to `True`
-    - You can chose to load pre-saved deltas, instead of re-learning these (VERY much recommended!), by setting `load_saved_deltas` on line `139` to `True`
+      - You can optionally skip the graphs of latent spaces and metrics (for example, when bulk-training all datasets) by setting `skip_graphs` on line `140` to `True`
+      - You can chose to load pre-saved deltas, instead of re-learning these (VERY much recommended!), by setting `load_saved_deltas` on line `139` to `True`
   2. Plot explanations: set `show_explanation` on line `83` to `True` and edit the corresponding data on line `84`. This will also generate a 'metrics plot'. All plots will be stored in the `results/plots` folder.
-    - You can optionally choose to only plot the 'metrics plot' without restricting to a specific K, for this, set K to `None` on line `84`.
+      - You can optionally choose to only plot the 'metrics plot' without restricting to a specific K, for this, set K to `None` on line `84`.
   3. Re-plot a 'performance' plot generated in step 1. The data for these plots are stored in the `results/measures` folder. Set `show_plot` on line `41` to `True`, and specify the file name on line `44`.
   
 Optionally, you could also:
