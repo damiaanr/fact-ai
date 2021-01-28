@@ -41,7 +41,7 @@ def load_vae(input_dim, model_file, feature_transform = None):
 
     # Compute the representation of our input
     vae = GaussianVAE(input, 1, architecture["inference"]["layer_size"], architecture["latent_dimension"], decoder_layer_size=architecture["model"]["layer_size"])
-    rep, _ = vae.encoder(prob = 1.0)
+    rep, _ = vae.encoder(prob = 0) # changed in TF2.x
 
     # Setup and restore the tf session
     sess = tf.compat.v1.Session()
