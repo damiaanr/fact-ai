@@ -1,4 +1,5 @@
 import tensorflow as tf
+import tensorflow_probability as tfp
 import numpy as np
 
 EPS = 1e-20
@@ -11,7 +12,7 @@ def log_likelihood_gaussian(x, mu, sigma_square):
 
 def log_likelihood_student(x, mu, sigma_square, df=2.0):
     sigma = tf.sqrt(sigma_square)
-    dist = tf.compat.v1.distributions.StudentT(df=df,
+    dist = tfp.distributions.StudentT(df=df,
                                              loc=mu,
                                              scale=sigma)
     return tf.reduce_sum(input_tensor=dist.log_prob(x), axis=1)
