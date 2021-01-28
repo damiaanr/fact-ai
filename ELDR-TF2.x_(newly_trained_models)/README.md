@@ -33,11 +33,11 @@
   3. If still present: deleting all saved models and explanation by recursively deleting `{dataset-name}/Model`, and deleting `{dataset-name}-K/delta([0-9]*).npy`
   4. Go to the {dataset-name} folder and run (bash script) `train_scvis.sh`
   5. Inside {dataset-name} run vertices.py and manually select clusters
-    - First check on line `16` how many classes need to be chosen
-    - Run the command `python vertices.py`
-    - After the plot opens, mentally decide which classes to choose
-    - Place the points _around_ the class, and press any key to continue
-    - After the last class has been marked, close the plot
+      - First check on line `16` how many classes need to be chosen
+      - Run the command `python vertices.py`
+      - After the plot opens, mentally decide which classes to choose
+      - Place the points _around_ the class, and press any key to continue
+      - After the last class has been marked, close the plot
   6. Go to the corresponding 'K-folder', open `{dataset-name}-K/run.ipynb`
   7. In cell 7, set 'run' to 'True'
   8. Run all cells in {dataset-name}-K/run.ipynb, and consequently in `{dataset-name}/run.ipynb`

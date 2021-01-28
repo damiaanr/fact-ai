@@ -27,8 +27,8 @@
   1. Install the updated variant of CSVIS by running the command `python setup.py install` in the scvis folder
   2. Choose a dataset (Bipolar/Heart/Iris/Housing)
   3. Choose whether you would like to restrict the sparsity of the explanations
-    1. If yes, open `{dataset-name}-K/run.ipynb`
-    2. If not, open `{dataset-name}/run.ipynb`
+      1. If yes, open `{dataset-name}-K/run.ipynb`
+      2. If not, open `{dataset-name}/run.ipynb`
   4. Run all cells
   5. For Heart/Iris/Housing dataset: also run all cells in `{dataset-name}-modified/run.ipynb`
   6. To run the Synthetic dataset (a new model needs to be trained anyway): recursively delete `Synthetic/Model`, and run `Synthetic/run.ipynb`; again delete `Synthetic/Model` and run `Synthetic/run-ig.ipynb`
