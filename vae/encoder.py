@@ -11,7 +11,7 @@ MAX_SIGMA_SQUARE = 1e10
 LEARNING_RATE = 0.01
 L2_REGULARISATION = 0.001
 MAX_EPOCH = 100
-BATCH_SIZE = 505
+BATCH_SIZE = 100
 PERPLEXITY = 10
 LATENT_DIMENSION = 2
 
@@ -28,16 +28,9 @@ def init_w_b(layer):
 
 class VAE(nn.Module):
     """
-    Variational autoencoder based on SCVIS (repository url: https://github.com/shahcompbio/scvis) published in the paper
-    'Interpretable dimensionality reduction of single cell transcriptome data with deep generative models' by Ding et
-    al. (paper url: https://www.nature.com/articles/s41467-018-04368-5)
+    @see https://medium.com/analytics-vidhya/complete-guide-to-build-an-autoencoder-in-pytorch-and-keras-94555dce395d
     """
     def __init__(self, input_dim: int, latent_dim: int):
-        """
-
-        :param input_dim: The number of features of each instance in the dataset
-        :param latent_dim: The number of latent dimensions to map it onto.
-        """
         super(VAE, self).__init__()
 
         self._input_dim = input_dim
@@ -89,17 +82,21 @@ class VAE(nn.Module):
         h2 = F.elu(self.encoder_layer2(h1))
         h3 = F.elu(self.encoder_layer3(h2))
 
-        weights_mu = F.dropout(self.encoder_layer_mu.weight, p=p)
+        weights_mu = F.dropout(self.encoder_layer_mu.weight, p=1.0 - p)
 
         mu = torch.add(torch.matmul(h3, torch.transpose(weights_mu, 0, 1)), self.encoder_layer_mu.bias)
-
+        
         log_var = self.encoder_layer_sigma_square(h3)
         log_var = torch.clamp(F.softplus(log_var), EPS, MAX_SIGMA_SQUARE)
 
         return mu, log_var
 
-    def sampling(self, encoder_mu, encoder_log_var, batch_size=BATCH_SIZE):
-        ep = torch.randn([batch_size, self._latent_dim])
+    def sampling(self, encoder_mu, encoder_log_var, batch_size=BATCH_SIZE, eval = False):
+        if eval:
+          ep = 0.5 # we keep the points static during inference, so gradients can successfully find a direction
+        else:
+          ep = torch.randn([batch_size, self._latent_dim]) # but not during training of the model
+          
         latent_z = torch.add(encoder_mu, torch.sqrt(encoder_log_var) * ep)
         return latent_z
 
@@ -165,7 +162,7 @@ class CustomLoss(nn.Module):
 
         # Computes half the L2 norm of a tensor without the `sqrt`: output = sum(t ** 2) / 2
         # Converted from tf.nn.l2_loss
-        penalty = [torch.sum(var ** 2) / 2 for name, var in self._net.named_parameters() if '.weight' in name]
+        penalty = [torch.sum(var ** 2) / 2 for name, var in self._net.named_parameters() if 'weight' in name]
         l2_regularizer = L2_REGULARISATION * sum(penalty)
         return l2_regularizer
 

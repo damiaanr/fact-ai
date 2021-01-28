@@ -5,7 +5,9 @@ import math
 import torch
 import os.path
 from vae.train import trainVAE
-from vae.encoder import VAE
+from vae.dataset import DataSet
+from vae.encoder import VAE, LATENT_DIMENSION, LEARNING_RATE, BATCH_SIZE, MAX_EPOCH, CustomLoss, PERPLEXITY, L2_REGULARISATION
+import datetime
 
 torch.manual_seed(42)
 
@@ -22,13 +24,13 @@ def generate_transformers(x, dataset, global_dir, min_variance=10, additional_sc
   """
 
   transform_functions = {
-    'vae': (lambda x: transform_vae(x, VAE_net, nz)),
+    'vae': (lambda x: transform_vae(x, VAE_net)),
     'pca': (lambda x: transform_pca(x, pca, var_pca)),
     'tsvd': (lambda x: transform_tsvd(x, tsvd)),
     'kpca': (lambda x: transform_kpca(x, kpca)),
     'spca': (lambda x: transform_spca(x, spca)),
-    # 'iso': (lambda x: transform_iso(x, iso)),
-    # 'lle': (lambda x: transform_lle(x, lle)),
+    'iso': (lambda x: transform_iso(x, iso)),
+    'lle': (lambda x: transform_lle(x, lle)),
   }
 
 
@@ -39,7 +41,8 @@ def generate_transformers(x, dataset, global_dir, min_variance=10, additional_sc
   to preserve readability.
   """
 
-  # Regular PCA
+  ################ Regular PCA ################
+  
   pca = decomposition.PCA(n_components=2) 
   var_pca = np.var(pca.fit_transform(x)) # We do this in one call, since we don't need latent_X for now
 
@@ -47,7 +50,10 @@ def generate_transformers(x, dataset, global_dir, min_variance=10, additional_sc
     return np.matmul(x, np.transpose(pca.components_))/math.sqrt(var_pca)*math.sqrt(min_variance)
     
 
-  # Truncated SVD
+
+
+
+  ################ Truncated SVD ################
   tsvd = decomposition.TruncatedSVD(n_components=2, n_iter=7, random_state=42)
   var_tsvd = np.var(tsvd.fit_transform(x))
 
@@ -55,11 +61,15 @@ def generate_transformers(x, dataset, global_dir, min_variance=10, additional_sc
     return np.matmul(x, np.transpose(tsvd.components_))/math.sqrt(var_tsvd)*math.sqrt(min_variance)*additional_scale_tsvd
     
     
-  # Kernel PCA
+    
+    
+    
+    
+  ################ Kernel PCA ################
   kpca = decomposition.KernelPCA(n_components=2, kernel="sigmoid", fit_inverse_transform=True, gamma=None, random_state=42)
   var_kpca = np.var(kpca.fit_transform(x))
   
-  if 0. in kpca.lambdas_:
+  if 0. in kpca.lambdas_: # KPCA with Sigmoid kernel does not work for this set
     del transform_functions['kpca']
   
   def transform_kpca(x, kpca):
@@ -68,14 +78,24 @@ def generate_transformers(x, dataset, global_dir, min_variance=10, additional_sc
       x = x.reshape(1,-1)
     return kpca.transform(x)/math.sqrt(var_kpca)*math.sqrt(min_variance)
     
-  # Sparse PCA
+    
+    
+    
+    
+    
+  ################ Sparse PCA ################
   spca = decomposition.SparsePCA(n_components=2, alpha=0.0001, random_state=42, n_jobs=-1)
   var_spca = np.var(spca.fit_transform(x))
   
   def transform_spca(x, spca):
     return np.matmul(x, np.transpose(spca.components_))/math.sqrt(var_spca)*math.sqrt(min_variance)
     
-  # ISO
+    
+    
+    
+    
+    
+  ################ ISO ################
   iso = manifold.Isomap(n_neighbors=8, n_components=2, eigen_solver='dense')
   var_iso = np.var(iso.fit_transform(x))
   
@@ -85,7 +105,12 @@ def generate_transformers(x, dataset, global_dir, min_variance=10, additional_sc
       x = x.reshape(1,-1)
     return iso.transform(x)/math.sqrt(var_iso)*math.sqrt(min_variance)
     
-  # LLE
+    
+    
+    
+    
+    
+  ################ LLE ################
   lle = manifold.LocallyLinearEmbedding(n_neighbors=8, n_components=2, eigen_solver='dense')
   var_lle = np.var(lle.fit_transform(x))
   
@@ -95,19 +120,23 @@ def generate_transformers(x, dataset, global_dir, min_variance=10, additional_sc
       x = x.reshape(1,-1)
     return lle.transform(x)/math.sqrt(var_lle)*math.sqrt(min_variance)
   
-  # VAE
+  
+  
+  
+  
+  
+  ################ SCVIS VAE ################
   VAE_save_file = global_dir + "/results/vae_models/" + dataset + ".pt"
   
-  #x = np.array(x)
-  nz = np.max(np.abs(x)) # normalizer
-  
   if not os.path.isfile(VAE_save_file):
-    trainVAE(x/nz, global_dir, dataset)
+    # Auto-encoder needs to be trained on the model first
+    print('Training new VAE model on %s dataset' % dataset)
+    trainVAE(x, global_dir, dataset) # normalizing using np.max(np.abs(x)) not necessary as it equals 1
   
+  # Once trained, it loads existing model, also for reproducability
   VAE_model = torch.load(VAE_save_file)['model_state_dict']
   
-  print('Loaded VAE model for %s, dumping model state' % dataset)
-  print(VAE_model)
+  print('Loaded VAE model for %s dataset' % dataset)
     
   VAE_net = VAE(input_dim=x.shape[1], latent_dim=2)
   VAE_net.load_state_dict(VAE_model)
@@ -119,14 +148,11 @@ def generate_transformers(x, dataset, global_dir, min_variance=10, additional_sc
       x = x.reshape(1,-1)
       
     with torch.no_grad():
-      # The neural net can handle both single or batch input
-      is_batch = len(x.shape) == 2
-      batch_size = len(x) if is_batch else 1
       x_batch = torch.from_numpy(x).float()
       encoder_mu, encoder_log_var = VAE_net.encoder(x_batch, p=1.0)
-      batch_z = VAE_net.sampling(encoder_mu, encoder_log_var, batch_size=batch_size).numpy()
+      batch_z = VAE_net.sampling(encoder_mu, encoder_log_var, batch_size=len(x), eval=True).numpy()
 
-      return np.array(batch_z, dtype=float)
-  return transform_functions
+    return np.array(batch_z, dtype=float)
   
+  return transform_functions
   
