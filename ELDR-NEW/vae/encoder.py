@@ -1,11 +1,10 @@
 import torch
 from torch import nn, sqrt, distributions, Tensor
 from torch.nn import functional as F
-import pandas as pd
 import numpy as np
-from scvis import data
 from scvis.tsne_helper import compute_transition_probability
 
+# Hyperparameters used for training the VAE
 EPS = 1e-6
 MAX_SIGMA_SQUARE = 1e10
 LEARNING_RATE = 0.01
@@ -28,9 +27,18 @@ def init_w_b(layer):
 
 class VAE(nn.Module):
     """
-    @see https://medium.com/analytics-vidhya/complete-guide-to-build-an-autoencoder-in-pytorch-and-keras-94555dce395d
+    Gaussian Variational AutoEncoder based on the paper "Interpretable dimensionality reduction of single cell
+    transcriptome data with deep generative model" by Ding et al.
+    (https://www.nature.com/articles/s41467-018-04368-5)
+
+    This autoencoder is a PyTorch implementation of the authors' Tensorflow implementation
+    (https://github.com/shahcompbio/scvis.)
     """
     def __init__(self, input_dim: int, latent_dim: int):
+        """
+        @param input_dim: Number of features of each data point
+        @param latent_dim:  Number of latent dimensions
+        """
         super(VAE, self).__init__()
 
         self._input_dim = input_dim
@@ -78,6 +86,12 @@ class VAE(nn.Module):
         self.dof = nn.Parameter(dof_tensor, requires_grad=True)  # requires_grad=True to make it trainable
 
     def encoder(self, x_batch, p=0.9):
+        """
+        @param x_batch: A batch of data points to be processed
+        @param p: Probability to keep a data point in the Dropout layer. The Dropout is used during training a model.
+        It is recommended that during inference, this value should be 1.0, i.e. keep all data points.
+        @return:
+        """
         h1 = F.elu(self.encoder_layer1(x_batch))
         h2 = F.elu(self.encoder_layer2(h1))
         h3 = F.elu(self.encoder_layer3(h2))
@@ -92,16 +106,27 @@ class VAE(nn.Module):
         return mu, log_var
 
     def sampling(self, encoder_mu, encoder_log_var, batch_size=BATCH_SIZE, eval = False):
+        """
+        @param encoder_mu: Mu returned by this class its encoder function
+        @param encoder_log_var: Variance returned by this class its encoder function
+        @param batch_size:
+        @param eval:
+        @return:
+        """
         if eval:
-          ep = 0.5 # we keep the points static during inference, so gradients can successfully find a direction
+          ep = 0.5  # we keep the points static during inference, so gradients can successfully find a direction
         else:
-          ep = torch.randn([batch_size, self._latent_dim]) # but not during training of the model
+          ep = torch.randn([batch_size, self._latent_dim])  # but not during training of the model
           
         latent_z = torch.add(encoder_mu, torch.sqrt(encoder_log_var) * ep)
         return latent_z
 
 
     def decoder(self, z):
+        """
+        @param z: A batch of data points mapped into the latent space.
+        @return:
+        """
         h1 = F.elu(self.decoder_layer1(z))
         h2 = F.elu(self.decoder_layer2(h1))
         h3 = F.elu(self.decoder_layer3(h2))
@@ -121,13 +146,17 @@ class VAE(nn.Module):
         latent_z = self.sampling(encoder_mu, encoder_log_var)
         decoder_mu, decoder_log_var = self.decoder(latent_z)
 
-        # TODO Is this the right moment to clamp the DOF tensor?
         dof = torch.clamp(self.dof, 0.1, 10)
 
         return p, latent_z, encoder_mu, encoder_log_var, decoder_mu, decoder_log_var, dof
 
 
 class CustomLoss(nn.Module):
+    """
+    Custom loss used in combination with the VAE from the paper "Interpretable dimensionality reduction of single cell
+    transcriptome data with deep generative model" by Ding et al.
+    (https://www.nature.com/articles/s41467-018-04368-5)
+    """
     def __init__(self, input_dim: int, net):
         super(CustomLoss, self).__init__()
         self._input_dim = input_dim
@@ -159,7 +188,6 @@ class CustomLoss(nn.Module):
         return objective
 
     def _l2_regulariser(self):
-
         # Computes half the L2 norm of a tensor without the `sqrt`: output = sum(t ** 2) / 2
         # Converted from tf.nn.l2_loss
         penalty = [torch.sum(var ** 2) / 2 for name, var in self._net.named_parameters() if 'weight' in name]
