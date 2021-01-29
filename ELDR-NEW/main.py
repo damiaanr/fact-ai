@@ -80,6 +80,7 @@ datasets = {
 ## OF EXPLANATIONS/MEASURES ################
 ############################################
 
+load_saved_latent_data = True
 show_explanation = False
 k, c1, c2, dataset, algo = (13, 1, 4, 'Housing', 'vae') # for ex: (7, 1, 4, 'Housing', 'vae')
                                                        # note: if K is 'None', global metrics will be plotted
@@ -96,9 +97,22 @@ if show_explanation:
       print('Algorithm was not loaded - can not plot explanaton')
     else:
       transformer = transform_functions[algo]
-      latent_X    = transformer(original_X)
-      latent_X[~np.isfinite(latent_X)] = 0
-      latent_Y, latent_Y_centers = cluster_latent_space(latent_X, num_clusters)
+      
+      latent_x_file = global_dir + "/results/latent_data/" + dataset + "_" + algo + ".pickle"
+      
+      if not load_saved_latent_data or not os.path.isfile(latent_x_file):
+        latent_X    = transformer(original_X)
+        latent_X[~np.isfinite(latent_X)] = 0
+        latent_Y, latent_Y_centers = cluster_latent_space(latent_X, num_clusters)
+        
+        latent_representation = (latent_X, latent_Y, latent_Y_centers)
+        
+        with open(latent_x_file, 'wb') as handle:
+          pickle.dump(latent_representation, handle, protocol=pickle.HIGHEST_PROTOCOL)
+      else:
+        with open(latent_x_file, 'rb') as handle:
+          latent_X, latent_Y, latent_Y_centers = pickle.load(handle)
+          print("Loading pre-saved latent data for dataset %s on %s" % (dataset, algo))
       
       if k is None:
         kf = original_X.shape[1] if original_X.shape[1] <= 5 else (original_X.shape[1] if original_X.shape[1] % 2 == 1 else original_X.shape[1]-1)
@@ -160,11 +174,23 @@ for dataset in datasets.keys():
     print('==> Applying dimensionality reduction using %s on the %s dataset' % (dr_algorithm, dataset))
     transformer = transform_functions[dr_algorithm]
     
-    latent_X    = transformer(original_X)
-    latent_X[~np.isfinite(latent_X)] = 0 # remove NaNs, infs, etc
-  
-    # Generate clusters in latent space (K-means, but could be anything)
-    latent_Y, latent_Y_centers = cluster_latent_space(latent_X, num_clusters)
+    # Loading existing latent spaces (or creating and dumping)
+    latent_x_file = global_dir + "/results/latent_data/" + dataset + "_" + dr_algorithm + ".pickle"
+      
+    if not load_saved_latent_data or not os.path.isfile(latent_x_file):
+      latent_X = transformer(original_X)
+      latent_X[~np.isfinite(latent_X)] = 0
+      latent_Y, latent_Y_centers = cluster_latent_space(latent_X, num_clusters)
+      
+      latent_representation = (latent_X, latent_Y, latent_Y_centers)
+      
+      with open(latent_x_file, 'wb') as handle:
+        pickle.dump(latent_representation, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    else:
+      with open(latent_x_file, 'rb') as handle:
+        latent_X, latent_Y, latent_Y_centers = pickle.load(handle)
+        print("Loading pre-saved latent data for dataset %s on %s" % (dataset, dr_algorithm))
+    
     
     # Plotting latent space
     if not skip_graphs:
