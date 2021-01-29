@@ -26,7 +26,7 @@
     
 # Procedure for evaluating pre-trained models
   
-  0. Make sure your environments aligns to the provided `environment.yml`
+  0. Make sure your environment aligns to the provided `requirements.txt`
   1. Install the updated variant of CSVIS by running the command `python setup.py install` in the scvis folder
   2. Choose a dataset (Bipolar/Heart/Iris/Housing)
   3. Choose whether you would like to restrict the sparsity of the explanations
