@@ -41,7 +41,7 @@ sys.path.append(global_dir)
 show_plot = False
 
 if show_plot:
-  with open(global_dir + '/results/measures/Iris_1611441106.107953.pickle', 'rb') as handle:
+  with open(global_dir + '/results/measures/Housing_1611937457.305099.pickle', 'rb') as handle:
     results = pickle.load(handle)
     plot_algorithm_comparison(results)
     quit()
