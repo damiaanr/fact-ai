@@ -1,5 +1,7 @@
 # General instructions
 
+**Before you start**: Make sure your environment aligns to the provided `requirements.txt`. Furthermore, **make sure** that you read the warning below.
+
 All code is run through `main.py` in command-line, without command line arguments/parameters. Note that all VAE models have been pre-trained (by us), and that all explanations for all datasets and dimensionality reduction techniques, for all levels of sparsitity, have already been learnt and provided. If you wish to re-train and re-learn, please delete all files inside the `results/deltas`, `results/vae_models` folders. Optionally, you could also delete all plot-data from the `results/measures` and `results/plots` folders.
 
 By simply toggling straightfoward variables in the code of `main.py`, you can:
@@ -29,9 +31,11 @@ All dimensionality reduction algorithms are stored in `dimensionality_reduction_
 
 All data is stored in the `data` folder. New lines separate samples, while tabs separate the features of a sample. As we are using K-means for clustering, we do not need more than X. It is possible, and also recommended, to only load a few of the datasets. The datasets which do not have to be loaded can be simply 'commented out' on lines `65-70` of `main.py`.
 
-# Packages to install
-This code was run on Python 3.7 with PyTorch 1.7.0.
-To quickly install the required package:
-```
-pip3 install numpy matplotlib torch sklearn pandas scipy
-```
+# Important warning
+
+Currently, there is a bug in `NumPy` which causes the library to crash while using `scipy` when `matplotlib` is also used (see, among others, [here](https://stackoverflow.com/questions/64015312/why-does-adding-a-subplot-to-a-matplotlib-figure-cause-numpy-to-crash) and [here](https://stackoverflow.com/questions/63373640/svd-does-not-converge-error-when-creating-matplotlib-subplots-and-calling-np-r)). This problem could cause an *“SVD does not converge”* error, indicating a problem with our code, which is _not_ the case. If you encounter this error, please follow the following instructions:
+
+  1. Set `skip_graphs` on line `140` to `True`. Graphs will not be plotted anymore.
+  2. Run the file normally
+  3. Look into the `results/measures` folder, and find out which `.pickle`-files have been created during the last run.
+  4. Plot these `.pickle` files manually by setting `show_plot` on line `41` to `True`, and specifying the file name on line `44`.
