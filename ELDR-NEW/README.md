@@ -1,6 +1,6 @@
 # General instructions
 
-**Before you start**: Make sure your environment aligns to the provided `environment.yml` or `requirements.txt`. Furthermore, make sure that you read the warning below.
+**Before you start**: Make sure your environment aligns to the provided `environment.yml` or `requirements.txt`. To avoid problems, creating a new/clean environment in which to run this code is preferred. Furthermore, make sure that you read the warning below.
 
 All code is run through `main.py` in command-line, without command line arguments/parameters. Note that all VAE models have been pre-trained (by us), and that all explanations for all datasets and dimensionality reduction techniques, for all levels of sparsitity, have already been learnt and provided. If you wish to re-train and re-learn, please delete all files inside the `results/deltas`, `results/vae_models` folders. Optionally, you could also delete all plot-data from the `results/measures` and `results/plots` folders.
 
