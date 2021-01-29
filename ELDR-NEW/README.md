@@ -28,3 +28,10 @@ All dimensionality reduction algorithms are stored in `dimensionality_reduction_
 # Different datasets
 
 All data is stored in the `data` folder. New lines separate samples, while tabs separate the features of a sample. As we are using K-means for clustering, we do not need more than X. It is possible, and also recommended, to only load a few of the datasets. The datasets which do not have to be loaded can be simply 'commented out' on lines `65-70` of `main.py`.
+
+# Packages to install
+This code was run on Python 3.7 with PyTorch 1.7.0.
+To quickly install the required package:
+```
+pip3 install numpy matplotlib torch sklearn pandas scipy
+```

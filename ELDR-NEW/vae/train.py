@@ -1,5 +1,4 @@
 import torch
-import pandas as pd
 import numpy as np
 from vae.dataset import DataSet
 from vae.encoder import VAE, LATENT_DIMENSION, LEARNING_RATE, BATCH_SIZE, MAX_EPOCH, CustomLoss, PERPLEXITY, L2_REGULARISATION
@@ -55,7 +54,7 @@ def trainVAE(x, global_dir, dataset):
       # loss.backward() computes the derivative of the loss w.r.t. the parameters (or anything requiring gradients) using backpropagation.
       loss.backward()
 
-      # Clip gradients like in SCVIS
+      # Clip gradients like in SCVIS to prevent exploding gradients
       torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm=CLIP_NORM)
       for name, var in net.named_parameters():
           if 'encoder_layer_sigma_square' in name:
