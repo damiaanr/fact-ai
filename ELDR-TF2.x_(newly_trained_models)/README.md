@@ -41,10 +41,11 @@
       - Place the points _around_ the class, and press any key to continue
       - After the last class has been marked, close the plot
   6. Go to the corresponding 'K-folder', open `{dataset-name}-K/run.ipynb`
-  7. In cell 7, set 'run' to 'True'
-  8. Run all cells in {dataset-name}-K/run.ipynb, and consequently in `{dataset-name}/run.ipynb`
+  7. In cell 7, set `run` to `True`
+  8. Run all cells in {dataset-name}-K/run.ipynb
   9. For the Heart/Iris/Housing dataset: recursively delete `{dataset-name}-modified/Model`, run (bash script) `{dataset-name}-modified/train_scvis.sh` and run all cells in `{dataset-name}-modified/run.ipynb`
-  10. To run the Synthetic dataset: recursively delete `Synthetic/Model`, and run `Synthetic/run.ipynb`; again delete `Synthetic/Model` and run `Synthetic/run-ig.ipynb`
+  10. Now open `{dataset-name}/run.ipynb`, and respectively set `corrupt` and `run` to `True` in the fourth and third to last cells. Run all cells.
+  11. To run the Synthetic dataset: recursively delete `Synthetic/Model`, and run `Synthetic/run.ipynb`; again delete `Synthetic/Model` and run `Synthetic/run-ig.ipynb`
 
 # Original description
 
