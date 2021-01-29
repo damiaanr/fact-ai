@@ -11,10 +11,11 @@
     * and updating Bipolar-IG/load_aug.py:5 - calling tf.compat.v1.disable_eager_execution();
     * and updating Bipolar-IG/load_aug.py:44 - changing parameter prob to 0.0 instead of 1.0;
     * and updating Bipolar/load_vae.py:44 - changing parameter prob to 0.0 instead of 1.0;
-    * and updating scvis/lib/scvis/likelihood.py - new log_likelihood_student function;
+    * and updating scvis/lib/scvis/likelihood.py - new log_likelihood_student function (depending on tensorflow-probability package);
     * and updating scvis/lib/scvis/model.py:12 - calling tf.compat.v1.disable_eager_execution();
     * and updating scvis/lib/scvis/model.py:210 - changing parameter prob to 0.0 instead of 1.0;
     * and updating scvis/lib/scvis/vae.py:138 - changing parameter prob to 0.1 instead of 0.9;
+    * and updating scvis/lib/scvis/run.py:108 - specifying loader for YAML.load;
     * and by making sure that the upgrade script and parameter changings do not cancel out - in fact it did not, as we ran the update script twice (and _1 - (1 - (prob)) = prob_, see scvis/lib/scvis/vae.py:139).
   * Deprecated matplotlib code was upgraded
     * By directly importing Colorbar in Code/myplot.py:14-15
@@ -28,6 +29,7 @@
     
 # Procedure for re-training models and re-learning explanations
   
+  0. Make sure your environments aligns to the provided `environment.yml`
   1. Install the updated variant of CSVIS by running the command `python setup.py install` in the scvis folder
   2. Choose a dataset (Bipolar/Heart/Iris/Housing)
   3. If still present: deleting all saved models and explanation by recursively deleting `{dataset-name}/Model`, and deleting `{dataset-name}-K/delta([0-9]*).npy`
@@ -39,10 +41,11 @@
       - Place the points _around_ the class, and press any key to continue
       - After the last class has been marked, close the plot
   6. Go to the corresponding 'K-folder', open `{dataset-name}-K/run.ipynb`
-  7. In cell 7, set 'run' to 'True'
-  8. Run all cells in {dataset-name}-K/run.ipynb, and consequently in `{dataset-name}/run.ipynb`
+  7. In cell 7, set `run` to `True`
+  8. Run all cells in {dataset-name}-K/run.ipynb
   9. For the Heart/Iris/Housing dataset: recursively delete `{dataset-name}-modified/Model`, run (bash script) `{dataset-name}-modified/train_scvis.sh` and run all cells in `{dataset-name}-modified/run.ipynb`
-  10. To run the Synthetic dataset: recursively delete `Synthetic/Model`, and run `Synthetic/run.ipynb`; again delete `Synthetic/Model` and run `Synthetic/run-ig.ipynb`
+  10. Now open `{dataset-name}/run.ipynb`, and respectively set `corrupt` and `run` to `True` in the fourth and third to last cells. Run all cells.
+  11. To run the Synthetic dataset: recursively delete `Synthetic/Model`, and run `Synthetic/run.ipynb`; again delete `Synthetic/Model` and run `Synthetic/run-ig.ipynb`
 
 # Original description
 

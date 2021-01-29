@@ -105,7 +105,7 @@ def _init_model(args, mode):
     config_file = args.config_file or config_file
     try:
         config_file_yaml = open(config_file, 'r')
-        config = yaml.load(config_file_yaml)
+        config = yaml.load(config_file_yaml, Loader=yaml.FullLoader)
         config_file_yaml.close()
     except yaml.YAMLError as exc:
         print('Error in the configuration file: {}'.format(exc))
