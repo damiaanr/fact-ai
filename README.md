@@ -10,16 +10,24 @@ Please be aware that we have two different versions of the code belonging to thi
 ## Dataset information
 
 
-|                           | Seeds                      | Glass          | Wine            |
-| ------                    | ----                       | -----          | -----           |
-| Data Set Characteristics: | Multivariate               | Multivariate   | Multivariate    |
-| Attribute Characteristics:| Real                       | Real           | Integer, Real   |
-| Associated Tasks:         | Classification, Clustering | Classification | Classification  |
-| Number of Attributes:     | 7                          | 13             | 10              |
-| Missing Values            | N/A                        | No             | No              |
-| Area                      | Life                       | Physical       | Physical        |
+|                           | Seeds                      | Glass          | Wine            | Heart                     | Iris           | Housing        |
+| ------                    | ----                       | -----          | -----           | ----                      | ----           | -----          |
+| Data Set Characteristics: | Multivariate               | Multivariate   | Multivariate    | Multivariate              | Multivariate   | Multivariate   |
+| Attribute Characteristics:| Real                       | Real           | Integer, Real   | Categorical, Integer, Real| Real           | Real           |
+| Associated Tasks:         | Classification, Clustering | Classification | Classification  | Classification            | Classification | Classification |
+| Number of Instances :     | 210                        | 214            | 178             | 303                       | 150            | 506            |
+| Number of Attributes:     | 7                          | 13             | 10              | 75*                       | 4              | 13             |
+| Missing Values            | N/A                        | No             | No              | Yes                       | No             | No             |
+| Area                      | Life                       | Physical       | Physical        | Life                      | Life           | Physical       |
 
+*only 14 attributes used
 ### Source
+
+Housing: https://archive.ics.uci.edu/ml/machine-learning-databases/housing/
+
+Iris: https://archive.ics.uci.edu/ml/datasets/iris
+
+Heart: https://archive.ics.uci.edu/ml/datasets/heart+disease
 
 Seeds: https://archive.ics.uci.edu/ml/datasets/seeds 
 
