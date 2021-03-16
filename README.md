@@ -10,15 +10,15 @@ Please be aware that we have two different versions of the code belonging to thi
 ## Dataset information
 
 
-|                           | Seeds                      | Glass          | Wine            | Heart                     | Iris           | Housing        |
-| ------                    | ----                       | -----          | -----           | ----                      | ----           | -----          |
-| Data Set Characteristics: | Multivariate               | Multivariate   | Multivariate    | Multivariate              | Multivariate   | Multivariate   |
-| Attribute Characteristics:| Real                       | Real           | Integer, Real   | Categorical, Integer, Real| Real           | Real           |
-| Associated Tasks:         | Classification, Clustering | Classification | Classification  | Classification            | Classification | Classification |
-| Number of Instances :     | 210                        | 214            | 178             | 303                       | 150            | 506            |
-| Number of Attributes:     | 7                          | 13             | 10              | 75*                       | 4              | 13             |
-| Missing Values            | N/A                        | No             | No              | Yes                       | No             | No             |
-| Area                      | Life                       | Physical       | Physical        | Life                      | Life           | Physical       |
+|                           | Seeds                      | Glass          | Wine            | Heart                     | Iris           | Housing        | RNA             |
+| ------                    | ----                       | -----          | -----           | ----                      | ----           | -----          | ---             |
+| Data Set Characteristics  | Multivariate               | Multivariate   | Multivariate    | Multivariate              | Multivariate   | Multivariate   | Multivariate    |
+| Attribute Characteristics | Real                       | Real           | Integer, Real   | Categorical, Integer, Real| Real           | Real           | Real            |
+| Associated Tasks          | Classification, Clustering | Classification | Classification  | Classification            | Classification | Classification | Classification  |
+| Number of Instances       | 210                        | 214            | 178             | 303                       | 150            | 506            | 25000           |
+| Number of Attributes      | 7                          | 13             | 10              | 75*                       | 4              | 13             | 13166           |
+| Missing Values            | N/A                        | No             | No              | Yes                       | No             | No             | No              |
+| Area                      | Life                       | Physical       | Physical        | Life                      | Life           | Physical       | Life            |
 
 *only 14 attributes used
 ### Source
