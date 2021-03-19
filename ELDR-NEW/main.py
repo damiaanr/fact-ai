@@ -1,5 +1,5 @@
 from explainer import Explainer
-from functions import load_data, plot_algorithm_comparison, cluster_latent_space
+from functions import load_data, plot_algorithm_comparison, cluster_latent_space, truncate, similarity, load_delta
 from dimensionality_reduction_algorithms import generate_transformers
 import numpy as np
 import pickle
@@ -60,14 +60,14 @@ print('Loading datasets...')
 
 variance_adjust = 10 # The variance we would like the data in our latent spaces to have
 
-# Loading all datasets - tuples: (X, num_clusters)
+# Loading all datasets - tuples: (X, num_clusters, epsilon)
 datasets = {
-  'Housing': (load_data(global_dir + '/data/Housing.tsv', False, False, False)[0], 6),
-  'Iris': (load_data(global_dir + '/data/Iris.tsv', False, False, False)[0], 3),
-  'Heart': (load_data(global_dir + '/data/Heart.tsv', False, False, False)[0], 8),
-  'Seeds': (load_data(global_dir + '/data/Seeds.tsv', False, True, True)[0], 3),
-  'Wine': (load_data(global_dir + '/data/Wine.tsv', False, True, False)[0], 3),
-  'Glass': (load_data(global_dir + '/data/Glass.tsv', False, True, True)[0], 7),
+  #'Housing': (load_data(global_dir + '/data/Housing.tsv', False, False, False)[0], 6, 1.5),
+  #'Iris': (load_data(global_dir + '/data/Iris.tsv', False, False, False)[0], 3, 0.75),
+  #'Heart': (load_data(global_dir + '/data/Heart.tsv', False, False, False)[0], 8, 1.0),
+  #'Seeds': (load_data(global_dir + '/data/Seeds.tsv', False, True, True)[0], 3, 1.0),
+  'Wine': (load_data(global_dir + '/data/Wine.tsv', False, True, False)[0], 3, 1.0),
+  'Glass': (load_data(global_dir + '/data/Glass.tsv', False, True, True)[0], 7, 1.75),
 }
 
 
@@ -126,7 +126,7 @@ if show_explanation:
       else:
         E = Explainer(original_X, latent_Y, transformer, num_clusters, 0.5, global_dir, latent_X)
         E.set_delta(np.load(save_file_name))
-        cr, cv = E.metrics(k=k)
+        cr, cv = E.metrics(epsilon=fixed_epsilon, k=k)
         
         print('Average correctness: %.3f | Average coverage: %.3f' % (np.mean(cr), np.mean(cv)))
         
@@ -158,7 +158,7 @@ skip_graphs       = False # Used when idle/afk training datasets after each othe
 print('Finished loading %d dataset(s)' % len(datasets))
 
 for dataset in datasets.keys():
-  original_X, num_clusters = datasets[dataset]
+  original_X, num_clusters, fixed_epsilon = datasets[dataset]
 
   # Generate transformation functions (r - map from original to latent space)
   transform_functions = generate_transformers(original_X, dataset, global_dir, min_variance = variance_adjust, additional_scale_tsvd = (20 if dataset == 'Glass' else 1))
@@ -166,9 +166,9 @@ for dataset in datasets.keys():
   # We will be training for different k with different algorithms
   K = np.arange(1, original_X.shape[1]+1, (1 if original_X.shape[1] <= 5 else 2))
   out = np.zeros((len(K), 2*len(transform_functions))) # correctness and coverage
-    
+  similarity_scores = []
   fig, axs = plt.subplots((3 if len(transform_functions) >= 3 else len(transform_functions)), math.ceil(len(transform_functions)/3))
-    
+  
   i = 0
   for dr_algorithm in transform_functions.keys():
     print('==> Applying dimensionality reduction using %s on the %s dataset' % (dr_algorithm, dataset))
@@ -212,7 +212,7 @@ for dataset in datasets.keys():
           E = Explainer(original_X, latent_Y, transformer, num_clusters, 0.5, global_dir, latent_X)
           E.set_delta(np.load(save_file_name))
           
-          cr, cv = E.metrics(k=k)
+          cr, cv = E.metrics(epsilon=fixed_epsilon, k=k)
           
           mean_cr = np.mean(cr)
           mean_cv = np.mean(cv)
@@ -224,7 +224,7 @@ for dataset in datasets.keys():
             for trial in range(num_trials):
               E = Explainer(original_X, latent_Y, transformer, num_clusters, lamb, global_dir, latent_X)
               E.learn(verbose_interval=1000)
-              cr, cv = E.metrics(epsilon=1.0, k=k)
+              cr, cv = E.metrics(epsilon=fixed_epsilon, k=k)
               
               mean_cr = np.mean(cr)
               mean_cv = np.mean(cv)
@@ -237,7 +237,35 @@ for dataset in datasets.keys():
                 out[j, i+1] = mean_cv
                 print('New record! Saved delta to ' + str(save_file_name))
                 np.save(save_file_name, E.get_delta())
+                
         j += 1
+        
+      # Evaluating epsilon
+      d = np.diagonal(cr) # adapted from eval_epsilon (https://github.com/GDPlumb/ELDR/blob/master/Code/metrics.py)
+      print('Evaluation of epsilon (%.2f) for dataset %s using %s: mean: %.2f; min: %.2f; max: %.2f' % (fixed_epsilon, dataset, dr_algorithm, np.mean(d), np.min(d), np.max(d)))
+        
+      # Calculating similarity metric
+      S = np.zeros((len(K) - 1, 2))
+
+      for c in range(len(K) - 1):
+        k_more = K[c]
+        k_less = K[c + 1]
+        
+        d_more = np.load(global_dir + "/results/deltas/" + dataset + "_" + dr_algorithm + "_" + str(variance_adjust) + "_k" + str(k_more) + ".npy")
+        d_less = np.load(global_dir + "/results/deltas/" + dataset + "_" + dr_algorithm + "_" + str(variance_adjust) + "_k" + str(k_less) + ".npy")
+
+        res = np.ones((num_clusters, num_clusters))
+        for p in range(num_clusters):
+          for q in range(num_clusters):
+            if p != q:
+              e_more = load_delta(d_more, k_more, p, q)
+              e_less = load_delta(d_less, k_less, p, q)
+              res[p, q] = similarity(e_more, e_less)
+            
+        S[c, 0] = k_more
+        S[c, 1] = np.mean(res)
+        similarity_scores.append(S)
+        
     i += 2 # index for DR algorithm in output matrix
     
   if not skip_graphs:
@@ -253,9 +281,25 @@ for dataset in datasets.keys():
     
     # Then plotting corresponding results (if training was enabled)
     if train_algos:
-      results = (out, K, list(transform_functions.keys()), dataset)
+      results = (out, K, list(transform_functions.keys()), dataset, similarity_scores)
       
       plot_algorithm_comparison(results)
+      
+      similarity_scores = np.round(similarity_scores, 2)
+      out = np.round(out, 2)
+      
+      # Printing results
+      print('Printing results for similarity scores for every K...')
+      i = 0
+      for dr_algorithm in transform_functions.keys():
+        print(similarity_scores[i][:,0], similarity_scores[i][:,1], dr_algorithm)
+        i += 1
+        
+      print('Printing results for correctness and coverage for every K...')
+      i = 0
+      for dr_algorithm in transform_functions.keys():
+        print(dr_algorithm, K, list(zip(out[:, i*2], out[:, i*2+1])))
+        i += 1
       
       with open(global_dir + "/results/measures/" + dataset + "_" + str(datetime.timestamp(datetime.now())) + ".pickle", 'wb') as handle:
         pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
