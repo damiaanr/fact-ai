@@ -7,6 +7,11 @@ Please be aware that we have two different versions of the code belonging to thi
     2. For the (by us) re-trained models, using the upgraded existing code, head to `ELDR-TF2.x_(newly_trained_models)` for further instructions
 2. Our new, from-scratch, implementation which includes additional dimensionality reduction algorithms and datasets - head to `ELDR-NEW`
 
+## Results
+
+We have been able to successfully reproduce experiments and results by running the pre-loaded models, after re-training these models, and by rewriting the algorithm from scratch. Concrete performance results are provided within the readme of the `ELDR-NEW` section.
+
+
 ## Dataset information
 
 
