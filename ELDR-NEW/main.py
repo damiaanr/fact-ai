@@ -89,7 +89,7 @@ if show_explanation:
   if dataset not in datasets.keys():
     print('Dataset was not loaded - can not plot explanation')
   else:
-    original_X, num_clusters = datasets[dataset]
+    original_X, num_clusters, fixed_epsilon = datasets[dataset]
     
     transform_functions = generate_transformers(original_X, dataset, global_dir, min_variance = variance_adjust, additional_scale_tsvd = (20 if dataset == 'Glass' else 1))
     
