@@ -62,10 +62,10 @@ variance_adjust = 10 # The variance we would like the data in our latent spaces 
 
 # Loading all datasets - tuples: (X, num_clusters, epsilon)
 datasets = {
-  #'Housing': (load_data(global_dir + '/data/Housing.tsv', False, False, False)[0], 6, 1.5),
-  #'Iris': (load_data(global_dir + '/data/Iris.tsv', False, False, False)[0], 3, 0.75),
-  #'Heart': (load_data(global_dir + '/data/Heart.tsv', False, False, False)[0], 8, 1.0),
-  #'Seeds': (load_data(global_dir + '/data/Seeds.tsv', False, True, True)[0], 3, 1.0),
+  'Housing': (load_data(global_dir + '/data/Housing.tsv', False, False, False)[0], 6, 1.5),
+  'Iris': (load_data(global_dir + '/data/Iris.tsv', False, False, False)[0], 3, 0.75),
+  'Heart': (load_data(global_dir + '/data/Heart.tsv', False, False, False)[0], 8, 1.0),
+  'Seeds': (load_data(global_dir + '/data/Seeds.tsv', False, True, True)[0], 3, 1.0),
   'Wine': (load_data(global_dir + '/data/Wine.tsv', False, True, False)[0], 3, 1.0),
   'Glass': (load_data(global_dir + '/data/Glass.tsv', False, True, True)[0], 7, 1.75),
 }
@@ -167,7 +167,7 @@ for dataset in datasets.keys():
   K = np.arange(1, original_X.shape[1]+1, (1 if original_X.shape[1] <= 5 else 2))
   out = np.zeros((len(K), 2*len(transform_functions))) # correctness and coverage
   similarity_scores = []
-  fig, axs = plt.subplots((3 if len(transform_functions) >= 3 else len(transform_functions)), math.ceil(len(transform_functions)/3))
+  fig, axs = plt.subplots((3 if len(transform_functions) >= 3 else len(transform_functions)), math.ceil(len(transform_functions)/3), squeeze=False)
   
   i = 0
   for dr_algorithm in transform_functions.keys():
