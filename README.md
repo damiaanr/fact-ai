@@ -9,7 +9,7 @@ Please be aware that we have two different versions of the code belonging to thi
 
 ## Results
 
-We have been able to successfully reproduce experiments and results by running the pre-loaded models, after re-training these models, and by rewriting the algorithm from scratch. Concrete performance results are provided within the readme of the `ELDR-NEW` section.
+We have been able to successfully reproduce experiments and results by running the pre-loaded models; after re-training these models; and by rewriting the algorithm from scratch. Concrete performance results are provided within the readme of the `ELDR-NEW` section.
 
 
 ## Dataset information
